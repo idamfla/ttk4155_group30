@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        ".als.json": "jsonc",
+        "io.h": "c",
+        "iom162.h": "c"
+    }
+}
