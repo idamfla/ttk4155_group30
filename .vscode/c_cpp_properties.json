@@ -6,9 +6,11 @@
                 "${workspaceFolder}/**",
                 "/usr/lib/avr/include"
             ],
-            "defines": ["__AVR_ATmega162__"],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
+            "defines": [
+                "__AVR_ATmega162__"
+            ],
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-x64"
         }
