@@ -53,3 +53,10 @@ debug:
 	sleep 2
 	avr-gdb -tui -iex "target remote localhost:4242" $(BUILD_DIR)/a.out
 	killall -s 9 avarice	
+
+.PHONY: docs
+docs:
+	mkdir -p build/doxygen
+	doxygen Doxyfile
+	echo ""
+	echo "Open build/doxygen/html/index.html to view the documentation"

@@ -6,10 +6,12 @@ RUN apt-get update && apt-get install -y \
     avr-libc \
     avrdude \
     binutils \
+    doxygen \
     gcc-arm-none-eabi \
     gcc-avr \
     gdb-arm-none-eabi \
     git \
+    graphviz \
     libftdi-dev \
     libftdi1-dev \
     libhidapi-dev \
