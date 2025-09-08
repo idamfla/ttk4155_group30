@@ -1,4 +1,10 @@
 {
+    "editor.formatOnSave": true,
+    "[c]": {
+        "editor.rulers": [
+            100
+        ]
+    },
     "files.associations": {
         ".als.json": "jsonc",
         "io.h": "c",
