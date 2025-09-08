@@ -6,7 +6,9 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-vscode.cpptools"
+                "ms-vscode.cpptools",
+                "github.copilot",
+                "github.copilot-chat"
             ]
         }
     }
