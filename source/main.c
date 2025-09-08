@@ -1,7 +1,5 @@
 #include <avr/io.h>
 
-#include "uart.h"
-
 int main(void) {
     DDRC |= 1;
     while (1) {
