@@ -1,0 +1,43 @@
+{
+    "C source template": {
+        "prefix": "ctempl",
+        "description": "Create a template for .c files.",
+        "isFileTemplate": true,
+        "scope": "c",
+        "body": [
+            "/**",
+            " * @file $TM_FILENAME",
+            " * @author ${1:author}",
+            " * @brief ${2:brief}",
+            " * @date $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
+            " */",
+            "",
+            "#include \"${TM_FILENAME_BASE}.h\"",
+            "",
+            "${0}",
+            ""
+        ]
+    },
+    "Header template": {
+        "prefix": "htempl",
+        "description": "Create a template for .h files.",
+        "scope": "c",
+        "isFileTemplate": true,
+        "body": [
+            "/**",
+            " * @file $TM_FILENAME",
+            " * @author ${1:author}",
+            " * @brief ${2:Header file for ${TM_FILENAME_BASE}.c}",
+            " * @date $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
+            " */",
+            "",
+            "#ifndef ${TM_FILENAME/([^-\\.])|([-\\.])/${1:/upcase}${2:+_}/g}",
+            "#define ${TM_FILENAME/([^-\\.])|([-\\.])/${1:/upcase}${2:+_}/g}",
+            "",
+            "${0}",
+            "",
+            "#endif /* ${TM_FILENAME/([^-\\.])|([-\\.])/${1:/upcase}${2:+_}/g} */",
+            ""
+        ]
+    }
+}

@@ -6,8 +6,7 @@
         ]
     },
     "files.associations": {
-        ".als.json": "jsonc",
-        "io.h": "c",
-        "iom162.h": "c"
+        "*.c": "c",
+        "*.h": "c"
     }
 }
