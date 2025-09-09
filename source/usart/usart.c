@@ -9,9 +9,6 @@
 
 #include <avr/io.h>
 
-#define USART0 ((usart_t *)(&UBRR0L))
-#define USART1 ((usart_t *)(&UBRR1L))
-
 /* UCSRA bit definitions */
 #define RXC  RXC0
 #define TXC  TXC0

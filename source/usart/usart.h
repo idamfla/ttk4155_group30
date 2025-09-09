@@ -11,6 +11,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define USART0 ((usart_t *)(&UBRR0L))
+#define USART1 ((usart_t *)(&UBRR1L))
+
 typedef struct {
     volatile uint8_t ubrrl;
     volatile uint8_t ucsrb;
