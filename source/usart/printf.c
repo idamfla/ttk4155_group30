@@ -29,6 +29,7 @@ int _get(FILE *f) {
  * @see usart_init for baud rate calculation.
  */
 void printf_init(volatile usart_t *usart, uint16_t ubrr) {
+    _printf_usart = usart;
     usart_init(usart, ubrr);
     fdevopen(_put, _get);
 }
