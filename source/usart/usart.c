@@ -7,6 +7,7 @@
 
 #include "usart.h"
 
+#include <avr/interrupt.h>
 #include <avr/io.h>
 
 /* UCSRA bit definitions */
@@ -39,6 +40,9 @@
 #define UCSZ0 UCSZ00
 #define UCPOL UCPOL0
 
+static usart_rxcbk_t _usart0_rx_callback = 0;
+static usart_rxcbk_t _usart1_rx_callback = 0;
+
 /**
  * @brief Base function to initialize USART0 or USART1 in asynchronous mode with 8 data bits and 2
  * stop bits.
@@ -64,6 +68,25 @@ void usart_init(volatile usart_t *usart, uint16_t ubrr) {
     *ubrrh_c = (1 << URSEL) | (1 << USBS) | (3 << UCSZ0);
 }
 
+void usart_init_interrupt(volatile usart_t *usart, uint16_t ubrr, usart_rxcbk_t rx_callback) {
+    /* Set baud rate */
+    volatile uint8_t *ubrrh_ucsrc;
+
+    if (usart == USART0) {
+        ubrrh_ucsrc = &UBRR0H;
+        _usart0_rx_callback = rx_callback;
+    } else {
+        ubrrh_ucsrc = &UBRR1H;
+        _usart1_rx_callback = rx_callback;
+    }
+    *ubrrh_ucsrc = (uint8_t)(ubrr >> 8);
+    usart->ubrrl = (uint8_t)ubrr;
+    /* Enable receiver and transmitter and also enable receiver interrupts */
+    usart->ucsrb = (1 << RXEN) | (1 << TXEN) | (1 << RXCIE);
+    /* Set frame format (UBRRC with URSEL=1): 8data, 2stop bit,  */
+    *ubrrh_ucsrc = (1 << URSEL) | (0 << USBS) | (3 << UCSZ0);
+}
+
 /**
  * @brief Check if the USART transmit buffer is empty.
  * @param usart Pointer to the usart struct.
@@ -82,4 +105,10 @@ void usart_transmit(volatile usart_t *usart, uint8_t data) {
     while (!usart_tx_ready(usart));
     /* Put data into buffer, sends the data */
     usart->udr = data;
+}
+
+ISR(USART0_RXC_vect) {
+    // Handle USART0 receive interrupt
+    const uint8_t data = USART0->udr;
+    _usart0_rx_callback(data);
 }

@@ -21,7 +21,10 @@ typedef struct {
     volatile uint8_t udr;
 } usart_t;
 
+typedef void (*usart_rxcbk_t)(uint8_t data);
+
 void usart_init(volatile usart_t *usart, uint16_t ubrr);
+void usart_init_interrupt(volatile usart_t *usart, uint16_t ubrr, usart_rxcbk_t rx_callback);
 bool usart_tx_ready(volatile usart_t *usart);
 void usart_transmit(volatile usart_t *usart, uint8_t data);
 
