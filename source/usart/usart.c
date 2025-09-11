@@ -8,7 +8,6 @@
 #include "usart.h"
 
 #include <avr/interrupt.h>
-#include <avr/io.h>
 
 /* UCSRA bit definitions */
 #define RXC  RXC0

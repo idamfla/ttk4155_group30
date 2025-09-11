@@ -8,6 +8,7 @@
 #ifndef USART_H
 #define USART_H
 
+#include <avr/io.h>
 #include <stdbool.h>
 #include <stdint.h>
 
