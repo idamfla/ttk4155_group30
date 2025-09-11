@@ -61,7 +61,7 @@ void usart_init(volatile usart_t *usart, uint16_t ubrr) {
     /* Enable receiver and transmitter */
     usart->ucsrb = (1 << RXEN) | (1 << TXEN);
     /* Set frame format: 8data, 2stop bit */
-    *ubrrh_c = (1 << USBS) | (3 << UCSZ0);
+    *ubrrh_c = (1 << URSEL) | (1 << USBS) | (3 << UCSZ0);
 }
 
 /**
