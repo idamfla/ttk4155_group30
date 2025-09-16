@@ -15,10 +15,11 @@ int main(void) {
     // Enable external SRAM.
     MCUCR = (1 << SRE);
 
+    volatile uint8_t counter = 0;
+    volatile uint8_t *p;
+    p = (uint8_t *)0x1FFF;
     while (1) {
-        uint8_t *p;
-        p = (uint8_t *)0x1FFF;
-        *p = 1U;
+        *p = counter++;
     }
 
     return 0;
