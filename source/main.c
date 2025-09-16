@@ -6,12 +6,12 @@
 #define BAUD  38400    // Baud rate
 #define UBRR0 (FOSC / 16 / BAUD - 1)
 
-int counter = 0;
-
 int main(void) {
     printf_init(USART0, UBRR0);
     while (1) {
-        printf("Counter: %d\n\r", counter++);
+        uint8_t *p;
+        p = (uint8_t *)0x1FFF;
+        *p = 1U;
     }
 
     return 0;
