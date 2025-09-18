@@ -11,5 +11,8 @@
                 "github.copilot-chat"
             ]
         }
-    }
+    },
+    "runArgs": [
+        "--device=/dev/bus/usb"
+    ]
 }
