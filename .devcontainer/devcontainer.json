@@ -13,7 +13,7 @@
         }
     },
     "mounts": [
-        "source=/dev,target=/dev,type=bind"
+        "source=/dev/bus/usb,target=/dev/bus/usb,type=bind"
     ],
     "runArgs": [
         // "--device=/dev/bus/usb"
