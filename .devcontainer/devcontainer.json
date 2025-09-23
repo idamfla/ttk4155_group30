@@ -12,7 +12,11 @@
             ]
         }
     },
+    "mounts": [
+        "source=/dev,target=/dev,type=bind"
+    ],
     "runArgs": [
-        "--device=/dev/bus/usb"
+        // "--device=/dev/bus/usb"
+        "--privileged"
     ]
 }
