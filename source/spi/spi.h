@@ -9,6 +9,15 @@
 #pragma once
 #include <avr/io.h>
 
+#include "spi_transfer.h"
+
+typedef enum {
+    spi_slave_disp_d,
+    spi_slave_disp_c,
+    spi_slave_io,
+    spi_slave_can,
+} spi_slave_t;
+
 #define DDR_SPI DDRB
 #define DD_MOSI DDB5
 #define DD_SCK  DDB7
@@ -19,16 +28,5 @@
 #define SS2         DDB4
 #define DUMMY_DATA  0x00
 
-typedef struct {
-    uint8_t *data;
-    uint16_t length;
-    uint8_t ss;
-    uint8_t *recieved;
-} SPITransferData;
-
 void spi_master_init(void);
-void spi_start_data_transfer(const SPITransferData *transfer);
-
-// uint8_t spi_master_transmit(uint8_t slaveSS, uint8_t data);
-
-// void spi_write_word(uint8_t slaveSS, char *str, uint8_t n);
+void spi_transfer(const spi_transfer_t *transfer);
