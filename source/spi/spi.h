@@ -8,6 +8,7 @@
 
 #pragma once
 #include <avr/io.h>
+#include <stdbool.h>
 
 #include "spi_transfer.h"
 
@@ -28,5 +29,6 @@ typedef enum {
 #define SS2         DDB4
 #define DUMMY_DATA  0x00
 
+void _spi_next_transfer(void);
 void spi_master_init(void);
-void spi_transfer(const spi_transfer_t *transfer);
+bool spi_transfer(const spi_transfer_t* transfer);

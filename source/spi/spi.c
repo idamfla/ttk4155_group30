@@ -35,6 +35,10 @@ static volatile uint16_t _data_idx;
 static spi_transfer_t _transfer;
 static volatile bool _transfer_active = false;
 
+static void _spi_rxtx(void);
+static void _spi_slave_select(uint8_t slave_idx);
+static void _spi_slave_deselect(uint8_t slave_idx);
+
 static void _spi_rxtx(void) {
     SPDR = _transfer.tx_data[_data_idx++];
 }
@@ -80,6 +84,9 @@ void _spi_next_transfer(void) {
     _transfer_active = true;
     _data_idx = 0;
     _transfer = spi_queue_pop(&_spi_queue);
+    if (_transfer.transfer_started) {
+        _transfer.transfer_started();
+    }
     _spi_slave_select(_transfer.slave_idx);
     _spi_rxtx();
 }
@@ -96,9 +103,13 @@ void spi_master_init(void) {
     PORT_SLAVES |= (1 << SS1) | (1 << SS2);
 }
 
-void spi_transfer(const spi_transfer_t *transfer) {
-    spi_queue_push(&_spi_queue, transfer);
-    _spi_next_transfer();
+bool spi_transfer(const spi_transfer_t* transfer) {
+    if (spi_queue_push(&_spi_queue, transfer)) {
+        _spi_next_transfer();
+        return true;
+    } else {
+        return false;
+    }
 }
 
 ISR(SPI_STC_vect) {
@@ -110,6 +121,9 @@ ISR(SPI_STC_vect) {
     } else {
         _spi_slave_deselect(_transfer.slave_idx);
         _transfer_active = false;
+        if (_transfer.transfer_cmplt_cbk) {
+            _transfer.transfer_cmplt_cbk();
+        }
         _spi_next_transfer();
     }
 }
