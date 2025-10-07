@@ -8,4 +8,10 @@
 #ifndef UI_H
 #define UI_H
 
+#include "ui_engine.h"
+
+extern ui_t ui;
+
+void ui_init(void);
+
 #endif /* UI_H */

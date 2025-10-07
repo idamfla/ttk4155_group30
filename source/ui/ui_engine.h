@@ -8,16 +8,37 @@
 #ifndef UI_ENGINE_H
 #define UI_ENGINE_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
-typedef struct {
-    const char* text;
-    void (*action)(void);
-} ui_menu_item_t;
+#include "elements/ui_element.h"
+#include "ui_event.h"
 
 typedef struct {
-    ui_menu_item_t* items;
-    uint8_t num_items;
-} ui_menu_t;
+    volatile ui_event_t* buffer;
+    volatile ui_event_t* volatile back;
+    volatile ui_event_t* volatile front;
+    uint8_t max_size;
+    volatile uint8_t size;
+} ui_event_queue_t;
+
+typedef struct {
+    ui_element_t* volatile* stack;
+    ui_element_t* volatile* volatile stack_top;
+    uint8_t stack_capacity;
+} ui_element_stack_t;
+
+typedef struct {
+    ui_element_stack_t element_stack;
+    ui_event_queue_t event_queue;
+} ui_t;
+
+void ui_ctor(ui_t* const me, ui_element_t** stack, uint8_t stack_capacity, ui_event_t* event_buffer,
+             uint8_t event_queue_capacity);
+bool ui_element_push(ui_t* const me, ui_element_t* const element);
+void ui_element_pop(ui_t* const me);
+bool ui_event_push(ui_t* const me, const ui_event_t event);
+void ui_dispatch(ui_t* const me);
+void ui_draw(ui_t* const me);
 
 #endif /* UI_ENGINE_H */

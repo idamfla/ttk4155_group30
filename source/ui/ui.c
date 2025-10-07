@@ -9,17 +9,13 @@
 
 #include <stddef.h>
 
-#include "ui_engine.h"
+#define ELEMENT_STACK_SIZE 4
+#define EVENT_QUEUE_SIZE   5
 
-static ui_menu_item_t main_menu_items[] = {
-    {"Item 1", NULL},
-    {"Item 2", NULL},
-    {"Item 3", NULL},
-};
+ui_t ui;
+static ui_element_t* _ui_element_stack[ELEMENT_STACK_SIZE];
+static ui_event_t _ui_event_buffer[EVENT_QUEUE_SIZE];
 
-static ui_menu_t main_menu = {
-    .items = main_menu_items,
-    .num_items = sizeof(main_menu_items) / sizeof(main_menu_items[0]),
-};
-
-void ui_render(void) {}
+void ui_init(void) {
+    ui_ctor(&ui, _ui_element_stack, ELEMENT_STACK_SIZE, _ui_event_buffer, EVENT_QUEUE_SIZE);
+}
