@@ -30,10 +30,10 @@ int main(void) {
     sei();
 
     spi_master_init();
-    printf("Spi \n\r");
+    // printf("Spi \n\r");
 
     oled_init();
-    printf("oled \n\r");
+    // printf("oled \n\r");
 
     // const spi_transfer_t test2 = {.tx_data = test_data2,
     //                               .rx_data = NULL,
@@ -45,6 +45,7 @@ int main(void) {
         // oled_go_to_page_and_column(0x06, 0x05);
         // spi_transfer(&test_data2);
         // spi_transfer();
+        // PORTB ^= (1 << PB2);
         _delay_ms(1000);
     }
     return 0;

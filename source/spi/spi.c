@@ -14,12 +14,34 @@
 #include "../gpio/gpio.h"
 #include "spi_queue.h"
 
+// #define DDR_SPI DDRB
+// #define DD_MOSI DDB5
+// #define DD_SCK  DDB7
+
+// // #define SS DDB4
+// #define DDR_SLAVES  DDRB
+// #define PORT_SLAVES PORTB
+// #define SS1         DDB3
+// #define SS2         DDB4
+// #define DUMMY_DATA  0x00
+
+#define DDR_SPI_MOSI  DDRB
+#define PORT_SPI_MOSI PORTB
+#define PIN_SPI_MOSI  PB5
+
+#define DDR_SPI_SCK  DDRB
+#define PORT_SPI_SCK PORTB
+#define PIN_SPI_SCK  PB7
+
+#define DDR_OLED_DC  DDRB
 #define PORT_OLED_DC PORTB
 #define PIN_OLED_DC  PB2
 
+#define DDR_OLED_SS  DDRB
 #define PORT_OLED_SS PORTB
 #define PIN_OLED_SS  PB3
 
+#define DDR_IO_SS  DDRB
 #define PORT_IO_SS PORTB
 #define PIN_IO_SS  PB4
 
@@ -93,14 +115,19 @@ void _spi_next_transfer(void) {
 
 void spi_master_init(void) {
     /* Set MOSI and SCK output, all others input */
-    DDR_SPI = (1 << DD_MOSI) | (1 << DD_SCK);
+    DDR_IO_SS |= (1 << PIN_IO_SS);
+    DDR_SPI_MOSI |= (1 << PIN_SPI_MOSI);
+    DDR_SPI_SCK |= (1 << PIN_SPI_SCK);
+    DDR_OLED_DC |= (1 << PIN_OLED_DC);
+    DDR_OLED_SS |= (1 << PIN_OLED_SS);
+
     // DDR_SPI &= ~(1 << PB6);  // MISO as input
     /* Enable SPI, Master, set clock rate fck/16, interrupt*/
     SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR0) | (1 << SPIE);
 
     /* Set slave pins as output, and set them high (SS\bar) */
-    DDR_SLAVES |= (1 << SS1) | (1 << SS2);
-    PORT_SLAVES |= (1 << SS1) | (1 << SS2);
+    SET_PIN(PORT_IO_SS, PIN_IO_SS);
+    SET_PIN(PORT_OLED_SS, PIN_OLED_SS);
 }
 
 bool spi_transfer(const spi_transfer_t* transfer) {

@@ -17,7 +17,7 @@
 #define PORT_OLED_DC PORTC
 #define PIN_OLED_DC  PC0
 
-#define DDR_OLED_RST  PORTC
+#define DDR_OLED_RST  DDRC
 #define PORT_OLED_RST PORTC
 #define PIN_OLED_RST  PC1
 
@@ -47,4 +47,5 @@ static const uint8_t init_cmds[] = {
     0xAF,  // Display ON
     0xA4,  // Resume to RAM display
     0xA6,  // Normal display (not inverted)
+    // 0xA5 //Turn all light on
 };

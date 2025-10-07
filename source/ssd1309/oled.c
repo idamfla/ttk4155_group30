@@ -57,25 +57,24 @@ void oled_init(void) {
 }
 
 void oled_go_to_page_and_column(uint8_t page, uint8_t col) {
-    if (page > 7) {
-        return;
-    }
-    if (col > 127) {
+    if ((page > 7) || (col > 127) || (!transmit_done)) {
         return;
     }
 
-    if (!transmit_done) {
-        return;
-    }
-
-    _transmit_buffer[0] = 0x22;
-    _transmit_buffer[1] = page;
-    _transmit_buffer[2] = page;
-    _transmit_buffer[3] = 0x21;
-    _transmit_buffer[4] = col;
-    _transmit_buffer[5] = 0x7F;
+    _transmit_buffer[0] = 0x22;  // 0x22, set page address
+    _transmit_buffer[1] = page;  // page, page start
+    _transmit_buffer[2] = 0x07;  // 0x07, page end
+    _transmit_buffer[3] = 0x21;  // 0x21, set column address
+    _transmit_buffer[4] = col;   // col, column start
+    _transmit_buffer[5] = 0x7F;  // 0x7f, coumn end
     _transfer.length = 6;
 
     _transfer.slave_idx = spi_slave_disp_c;
     spi_transfer(&_transfer);
+
+    // _transmit_buffer[0] = 0x40;    // data mode
+    // _transmit_buffer[1] = 5;     // one byte: one pixel on
+    // _transfer.length = 2;
+    // _transfer.slave_idx = spi_slave_disp_d;
+    // spi_transfer(&_transfer);
 }

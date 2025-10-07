@@ -19,15 +19,7 @@ typedef enum {
     spi_slave_can,
 } spi_slave_t;
 
-#define DDR_SPI DDRB
-#define DD_MOSI DDB5
-#define DD_SCK  DDB7
-// #define SS DDB4
-#define DDR_SLAVES  DDRB
-#define PORT_SLAVES PORTB
-#define SS1         DDB3
-#define SS2         DDB4
-#define DUMMY_DATA  0x00
+
 
 void _spi_next_transfer(void);
 void spi_master_init(void);
