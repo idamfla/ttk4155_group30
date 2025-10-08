@@ -9,6 +9,8 @@
 
 #include <stddef.h>
 
+#include "ui_constants.h"
+
 static ui_event_t ui_event_pop(ui_t* const me);
 static ui_event_status_t ui_send_event(ui_element_t* element, const ui_event_t event);
 
@@ -75,6 +77,14 @@ static ui_event_t ui_event_pop(ui_t* const me) {
     return front;
 }
 
+void ui_draw_complete(ui_element_t* const me) {
+    if (me->line >= UI_DISPLAY_LINES) {
+        me->line = 0U;
+    } else {
+        ui_element_draw_vcall(me, me->line++);
+    }
+}
+
 static ui_event_status_t ui_send_event(ui_element_t* element, const ui_event_t event) {
     ui_event_status_t status;
     do {
@@ -94,9 +104,4 @@ void ui_dispatch(ui_t* const me) {
     if (ui_send_event(active_element, event) == ui_event_status_element_exit) {
         ui_element_pop(me);
     }
-}
-
-void ui_draw(ui_t* const me) {
-    ui_element_t* active_element = (*me->element_stack.stack_top);
-    ui_element_draw_vcall(active_element);
 }

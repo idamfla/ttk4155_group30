@@ -11,6 +11,7 @@
 typedef enum {
     ui_event_element_entry,
     ui_event_element_exit,
+    ui_event_draw,
     ui_event_button_up,
     ui_event_button_down,
     ui_event_button_left,

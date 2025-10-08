@@ -8,6 +8,8 @@
 #ifndef UI_ELEMENT_H
 #define UI_ELEMENT_H
 
+#include <stdint.h>
+
 #include "../ui_event.h"
 
 typedef struct ui_element_vtable ui_element_vtable_t;
@@ -18,18 +20,19 @@ struct ui_element {
     const ui_element_vtable_t* vptr;
     ui_element_t* parent;
     ui_element_on_event_t on_event;
+    uint8_t line;
 };
 
 struct ui_element_vtable {
-    void (*draw)(const ui_element_t* const me);
+    void (*draw)(const ui_element_t* const me, uint8_t line);
 };
 
 void ui_element_ctor(ui_element_t* const me, ui_element_on_event_t on_event);
 
 /* Virtual calls (late binding) */
 
-static inline void ui_element_draw_vcall(ui_element_t const* const me) {
-    me->vptr->draw(me);
+static inline void ui_element_draw_vcall(ui_element_t const* const me, uint8_t line) {
+    me->vptr->draw(me, line);
 }
 
 #endif /* UI_ELEMENT_H */

@@ -40,7 +40,7 @@ void ui_ctor(ui_t* const me, ui_element_t** stack, uint8_t stack_capacity, ui_ev
 bool ui_element_push(ui_t* const me, ui_element_t* const element);
 void ui_element_pop(ui_t* const me);
 bool ui_event_push(ui_t* const me, const ui_event_t event);
+void ui_draw_complete(ui_element_t* const me);
 void ui_dispatch(ui_t* const me);
-void ui_draw(ui_t* const me);
 
 #endif /* UI_ENGINE_H */
