@@ -21,6 +21,7 @@ typedef enum {
 typedef enum {
     ui_event_status_ignored,
     ui_event_status_handled,
+    ui_event_status_element_exit,
 } ui_event_status_t;
 
 #endif /* UI_EVENT_H */

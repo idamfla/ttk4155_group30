@@ -10,7 +10,7 @@
 #include <stddef.h>
 
 static ui_event_t ui_event_pop(ui_t* const me);
-static void ui_send_event(ui_element_t* element, const ui_event_t event);
+static ui_event_status_t ui_send_event(ui_element_t* element, const ui_event_t event);
 
 void ui_ctor(ui_t* const me, ui_element_t** stack, uint8_t stack_capacity, ui_event_t* event_buffer,
              uint8_t event_queue_capacity) {
@@ -75,11 +75,14 @@ static ui_event_t ui_event_pop(ui_t* const me) {
     return front;
 }
 
-static void ui_send_event(ui_element_t* element, const ui_event_t event) {
-    while (element->on_event(element, event) == ui_event_status_ignored) {
+static ui_event_status_t ui_send_event(ui_element_t* element, const ui_event_t event) {
+    ui_event_status_t status;
+    do {
         element = element->parent;
+        status = element->on_event(element, event);
         // No check for parent == NULL needed, as the root element must handle all events
-    }
+    } while (status == ui_event_status_ignored);
+    return status;
 }
 
 void ui_dispatch(ui_t* const me) {
@@ -88,7 +91,9 @@ void ui_dispatch(ui_t* const me) {
     }
     ui_event_t event = ui_event_pop(me);
     ui_element_t* active_element = (*me->element_stack.stack_top);
-    ui_send_event(active_element, event);
+    if (ui_send_event(active_element, event) == ui_event_status_element_exit) {
+        ui_element_pop(me);
+    }
 }
 
 void ui_draw(ui_t* const me) {

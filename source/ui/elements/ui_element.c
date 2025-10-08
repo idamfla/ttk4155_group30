@@ -9,6 +9,8 @@
 
 #include <stddef.h>
 
+#include "../ui_engine.h"
+
 static ui_event_status_t ui_element_default_on_event(ui_element_t* const me,
                                                      const ui_event_t event);
 static void ui_element_draw(ui_element_t const* const me);
@@ -34,7 +36,15 @@ static void ui_element_draw(ui_element_t const* const me) {
 }
 
 ui_event_status_t ui_element_default_on_event(ui_element_t* const me, const ui_event_t event) {
-    (void)me;    /* unused parameter */
-    (void)event; /* unused parameter */
-    return ui_event_status_handled;
+    (void)me; /* unused parameter */
+    ui_event_status_t status;
+    switch (event) {
+        case ui_event_button_left:
+            status = UI_EXIT_ELEMENT();
+            break;
+        default:
+            status = ui_event_status_handled;
+            break;
+    }
+    return status;
 }

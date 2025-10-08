@@ -14,6 +14,8 @@
 #include "elements/ui_element.h"
 #include "ui_event.h"
 
+#define UI_EXIT_ELEMENT() ui_event_status_element_exit
+
 typedef struct {
     volatile ui_event_t* buffer;
     volatile ui_event_t* volatile back;
