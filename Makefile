@@ -19,6 +19,7 @@ TARGET_DEVICE := m162
 
 CC := avr-gcc
 CFLAGS := -O -std=c11 -mmcu=$(TARGET_CPU) -ggdb -Wall -Wextra -Wpedantic
+CFLAGS += -MMD -MP # Auto-generate dependencies
 LDFLAGS := -Wl,-Map,$(BUILD_DIR)/output.map
 
 OBJECT_FILES = $(patsubst $(SOURCE_DIR)/%.c,$(BUILD_DIR)/%.o,$(SOURCE_FILES))
@@ -38,6 +39,8 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c Makefile | $(DIRS)
 $(BUILD_DIR)/main.hex: $(OBJECT_FILES) | $(DIRS)
 	$(CC) $(CFLAGS) $(OBJECT_FILES) $(LDFLAGS) -o $(BUILD_DIR)/a.out
 	avr-objcopy -j .text -j .data -O ihex $(BUILD_DIR)/a.out $(BUILD_DIR)/main.hex
+
+-include $(OBJECT_FILES:.o=.d)
 
 .PHONY: flash
 flash: $(BUILD_DIR)/main.hex
