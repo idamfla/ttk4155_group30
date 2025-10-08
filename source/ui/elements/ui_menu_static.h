@@ -20,7 +20,10 @@ typedef struct {
     uint8_t scroll_pos;
 } ui_menu_static_t;
 
-void ui_menu_static_ctor(ui_menu_static_t* const me, ui_on_event_t on_event,
+typedef ui_event_status_t (*ui_menu_static_on_event_t)(ui_menu_static_t* const me,
+                                                       const ui_event_t event);
+
+void ui_menu_static_ctor(ui_menu_static_t* const me, ui_menu_static_on_event_t on_event,
                          const char** const item_texts, uint8_t num_items);
 void ui_menu_static_draw(ui_menu_static_t const* const me);
 

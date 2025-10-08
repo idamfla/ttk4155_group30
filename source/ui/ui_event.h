@@ -18,4 +18,9 @@ typedef enum {
     ui_event_button_select,
 } ui_event_t;
 
+typedef enum {
+    ui_event_status_ignored,
+    ui_event_status_handled,
+} ui_event_status_t;
+
 #endif /* UI_EVENT_H */

@@ -7,7 +7,10 @@
 
 #include "ui_engine.h"
 
-ui_event_t ui_event_pop(ui_t* const me);
+#include <stddef.h>
+
+static ui_event_t ui_event_pop(ui_t* const me);
+static void ui_send_event(ui_element_t* element, const ui_event_t event);
 
 void ui_ctor(ui_t* const me, ui_element_t** stack, uint8_t stack_capacity, ui_event_t* event_buffer,
              uint8_t event_queue_capacity) {
@@ -29,7 +32,7 @@ bool ui_element_push(ui_t* const me, ui_element_t* const element) {
         return false;
     }
     *(--me->element_stack.stack_top) = element;
-    element->on_event(element, ui_event_element_entry);
+    ui_send_event(element, ui_event_element_entry);
     return true;
 }
 
@@ -38,8 +41,10 @@ void ui_element_pop(ui_t* const me) {
     if (me->element_stack.stack_top == me->element_stack.stack + me->element_stack.stack_capacity) {
         return;
     }
-    (*me->element_stack.stack_top)->on_event(*me->element_stack.stack_top, ui_event_element_exit);
+    ui_send_event(*me->element_stack.stack_top, ui_event_element_exit);
     ++me->element_stack.stack_top;
+    // Re-enter the new top element (Not implemented yet)
+    // ui_send_event(*me->element_stack.stack_top, ui_event_element_reentry);
 }
 
 bool ui_event_push(ui_t* const me, const ui_event_t event) {
@@ -58,7 +63,7 @@ bool ui_event_push(ui_t* const me, const ui_event_t event) {
     return true;
 }
 
-ui_event_t ui_event_pop(ui_t* const me) {
+static ui_event_t ui_event_pop(ui_t* const me) {
     ui_event_queue_t* queue = &me->event_queue;
     ui_event_t front = *(queue->front);
     if (queue->front > queue->buffer) {
@@ -70,14 +75,20 @@ ui_event_t ui_event_pop(ui_t* const me) {
     return front;
 }
 
+static void ui_send_event(ui_element_t* element, const ui_event_t event) {
+    while (element->on_event(element, event) == ui_event_status_ignored) {
+        element = element->parent;
+        // No check for parent == NULL needed, as the root element must handle all events
+    }
+}
+
 void ui_dispatch(ui_t* const me) {
     if (me->event_queue.size == 0) {
         return;
     }
     ui_event_t event = ui_event_pop(me);
     ui_element_t* active_element = (*me->element_stack.stack_top);
-
-    active_element->on_event(active_element, event);
+    ui_send_event(active_element, event);
 }
 
 void ui_draw(ui_t* const me) {
