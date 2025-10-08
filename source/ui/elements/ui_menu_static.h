@@ -25,6 +25,6 @@ typedef ui_event_status_t (*ui_menu_static_on_event_t)(ui_menu_static_t* const m
 
 void ui_menu_static_ctor(ui_menu_static_t* const me, ui_menu_static_on_event_t on_event,
                          const char** const item_texts, uint8_t num_items);
-void ui_menu_static_draw(ui_menu_static_t const* const me, uint8_t line);
+void ui_menu_static_draw(ui_menu_static_t const* const me, uint8_t* const buffer, uint8_t line);
 
 #endif /* UI_MENU_STATIC_H */

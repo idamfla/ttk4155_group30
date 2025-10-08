@@ -14,7 +14,7 @@
 
 static ui_event_status_t ui_element_default_on_event(ui_element_t* const me,
                                                      const ui_event_t event);
-static void ui_element_draw(ui_element_t const* const me, uint8_t line);
+static void ui_element_draw(ui_element_t const* const me, uint8_t* const buffer, uint8_t line);
 
 ui_element_t _ui_element_default = {
     .on_event = ui_element_default_on_event,
@@ -29,12 +29,12 @@ void ui_element_ctor(ui_element_t* const me, ui_element_on_event_t on_event) {
     me->vptr = &vtable;
     me->parent = &_ui_element_default;
     me->on_event = on_event;
-    me->line = 0U;
 }
 
-static void ui_element_draw(ui_element_t const* const me, uint8_t line) {
+static void ui_element_draw(ui_element_t const* const me, uint8_t* const buffer, uint8_t line) {
     (void)line; /* unused parameter */
     (void)me;   /* unused parameter */
+    (void)buffer;
     // TODO: Implement a default draw function that indicates an error
     // Prepare buffer for drawing
     // Call ssd1309 draw function to draw one line
@@ -46,13 +46,6 @@ ui_event_status_t ui_element_default_on_event(ui_element_t* const me, const ui_e
     switch (event) {
         case ui_event_button_left:
             status = UI_EXIT_ELEMENT();
-            break;
-        case ui_event_draw:
-            status = ui_event_status_handled;
-            if (me->line != 0) {
-                break;
-            }
-            ui_element_draw_vcall(me, me->line++);
             break;
         default:
             status = ui_event_status_handled;

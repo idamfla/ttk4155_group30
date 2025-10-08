@@ -15,7 +15,7 @@ static ui_event_t ui_event_pop(ui_t* const me);
 static ui_event_status_t ui_send_event(ui_element_t* element, const ui_event_t event);
 
 void ui_ctor(ui_t* const me, ui_element_t** stack, uint8_t stack_capacity, ui_event_t* event_buffer,
-             uint8_t event_queue_capacity) {
+             uint8_t event_queue_capacity, uint8_t* const graphics_buffer) {
     me->element_stack.stack = stack;
     // Stack grows downwards
     me->element_stack.stack_top = stack + stack_capacity;
@@ -26,6 +26,9 @@ void ui_ctor(ui_t* const me, ui_element_t** stack, uint8_t stack_capacity, ui_ev
     me->event_queue.front = event_buffer;
     me->event_queue.max_size = event_queue_capacity;
     me->event_queue.size = 0;
+
+    me->graphics_buffer = graphics_buffer;
+    me->line = 0U;
 }
 
 bool ui_element_push(ui_t* const me, ui_element_t* const element) {
@@ -77,11 +80,13 @@ static ui_event_t ui_event_pop(ui_t* const me) {
     return front;
 }
 
-void ui_draw_complete(ui_element_t* const me) {
+void ui_draw_complete(ui_t* const me) {
+    ui_element_t* active_element = (*me->element_stack.stack_top);
     if (me->line >= UI_DISPLAY_LINES) {
         me->line = 0U;
     } else {
-        ui_element_draw_vcall(me, me->line++);
+        ui_element_draw_vcall(active_element, me->graphics_buffer, me->line++);
+        // TODO: Send data to display
     }
 }
 
@@ -100,8 +105,15 @@ void ui_dispatch(ui_t* const me) {
         return;
     }
     ui_event_t event = ui_event_pop(me);
+
     ui_element_t* active_element = (*me->element_stack.stack_top);
-    if (ui_send_event(active_element, event) == ui_event_status_element_exit) {
+    if (event == ui_event_draw) {
+        if (me->line != 0) {
+            return;
+        }
+        ui_element_draw_vcall(active_element, me->graphics_buffer, me->line++);
+        // TODO: Send data to display
+    } else if (ui_send_event(active_element, event) == ui_event_status_element_exit) {
         ui_element_pop(me);
     }
 }

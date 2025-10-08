@@ -29,7 +29,7 @@ ui_menu_static_t _ui_menu_static_default = {
 void ui_menu_static_ctor(ui_menu_static_t *const me, ui_menu_static_on_event_t on_event,
                          const char **const item_texts, uint8_t num_items) {
     static const ui_element_vtable_t vtable = {
-        .draw = (void (*)(const ui_element_t *const, uint8_t))ui_menu_static_draw};
+        .draw = (void (*)(const ui_element_t *const, uint8_t *const, uint8_t))ui_menu_static_draw};
     ui_element_ctor(&me->super, (ui_element_on_event_t)on_event);
 
     me->super.vptr = &vtable;
@@ -79,8 +79,9 @@ static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_t *const
     return status;
 }
 
-void ui_menu_static_draw(ui_menu_static_t const *const me, uint8_t line) {
+void ui_menu_static_draw(ui_menu_static_t const *const me, uint8_t *const buffer, uint8_t line) {
     // TODO: this needs to be implemented
-    (void)line; /* unused parameter */
-    (void)me;   /* unused parameter */
+    (void)me;     /* unused parameter */
+    (void)buffer; /* unused parameter */
+    (void)line;   /* unused parameter */
 }
