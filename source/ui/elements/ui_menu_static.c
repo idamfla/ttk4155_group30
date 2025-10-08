@@ -9,8 +9,10 @@
 
 #include <stddef.h>
 
+#include "../ui_constants.h"
+
 extern ui_element_t _ui_element_default;
-static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_on_event_t *const me,
+static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_t *const me,
                                                          const ui_event_t event);
 
 ui_menu_static_t _ui_menu_static_default = {
@@ -38,11 +40,43 @@ void ui_menu_static_ctor(ui_menu_static_t *const me, ui_menu_static_on_event_t o
     me->current_item = 0U;
 }
 
-static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_on_event_t *const me,
+static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_t *const me,
                                                          const ui_event_t event) {
-    (void)me;
-    (void)event;
-    return ui_event_status_ignored;
+    ui_event_status_t status;
+    switch (event) {
+        case ui_event_element_entry:
+            me->current_item = 0U;
+            me->scroll_pos = 0U;
+            status = ui_event_status_handled;
+            break;
+        case ui_event_button_down:
+            if (me->current_item < me->num_items - 1U) {
+                ++me->current_item;
+                // If the selected item is at the edge or outside of the visible area, scroll down
+                // (only if not at the last item).
+                if ((uint8_t)(me->current_item - me->scroll_pos) >= UI_DISPLAY_LINES - 1U &&
+                    me->current_item < me->num_items - 1U) {
+                    ++me->scroll_pos;
+                }
+            }
+            status = ui_event_status_handled;
+            break;
+        case ui_event_button_up:
+            if (me->current_item != 0U) {
+                --me->current_item;
+                // If the selected item is at the edge of the visible area, scroll up (only if not
+                // at the first item).
+                if ((uint8_t)(me->current_item - me->scroll_pos) == 0U && me->current_item != 0U) {
+                    --me->scroll_pos;
+                }
+            }
+            status = ui_event_status_handled;
+            break;
+        default:
+            status = ui_event_status_ignored;
+            break;
+    }
+    return status;
 }
 
 void ui_menu_static_draw(ui_menu_static_t const *const me) {

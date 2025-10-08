@@ -35,13 +35,8 @@ static void main_menu_init(void) {
 
 static ui_event_status_t main_menu_on_event(ui_menu_static_t* const me, const ui_event_t event) {
     ui_event_status_t status;
+    (void)me; /* unused parameter */
     switch (event) {
-        case ui_event_element_entry:
-            me->current_item = 0U;
-            me->scroll_pos = 0U;
-            status = ui_event_status_handled;
-            break;
-
         default:
             status = ui_event_status_ignored;
             break;
