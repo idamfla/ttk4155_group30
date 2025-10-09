@@ -7,7 +7,6 @@
 
 #include "ui_element.h"
 
-#include <avr/pgmspace.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -43,8 +42,9 @@ static void ui_element_draw(ui_element_t const* const me, uint8_t* const buffer,
 
     memset(buffer, 0x00, UI_BUFFER_SIZE);
     while (c != '\0') {
-        uint8_t idx = (uint8_t)c - FONTS_PRINTABLE_CHAR_START;
-        memcpy_P(&buffer[i * 5U], &font5[idx][0], 5U);
+        // uint8_t idx = (uint8_t)c - FONTS_PRINTABLE_CHAR_START;
+        // memcpy_P(&buffer[i * 5U], &font5[idx][0], 5U);
+        FONTS_CPY_CHAR(font5, &buffer[i * 5U], c);
         c = msg[++i];
     }
 }
