@@ -7,10 +7,12 @@
 
 #include "ui_element.h"
 
+#include <avr/pgmspace.h>
 #include <stddef.h>
 #include <string.h>
 
 #include "../fonts.h"
+#include "../ui_constants.h"
 #include "../ui_engine.h"
 
 static ui_event_status_t ui_element_default_on_event(ui_element_t* const me,
@@ -39,9 +41,10 @@ static void ui_element_draw(ui_element_t const* const me, uint8_t* const buffer,
     uint8_t i = 0;
     char c = msg[i];
 
-    memset(buffer, 0U, 128U);
+    memset(buffer, 0x00, UI_BUFFER_SIZE);
     while (c != '\0') {
-        memcpy(&buffer[i * 5U], &font5[c - FONTS_PRINTABLE_CHAR_START], 5U);
+        uint8_t idx = (uint8_t)c - FONTS_PRINTABLE_CHAR_START;
+        memcpy_P(&buffer[i * 5U], &font5[idx][0], 5U);
         c = msg[++i];
     }
 }

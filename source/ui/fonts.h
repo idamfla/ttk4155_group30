@@ -7,7 +7,7 @@
 #ifndef FONTS_H_
 #define FONTS_H_
 
-#define FONTS_PRINTABLE_CHAR_START 32
+#define FONTS_PRINTABLE_CHAR_START 32U
 
 // Font 8x8 - Large
 extern const unsigned char font8[95][8];

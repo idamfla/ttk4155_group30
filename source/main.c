@@ -10,6 +10,7 @@
 #include "max156/max156.h"
 #include "oled/oled.h"
 #include "spi/spi.h"
+#include "ui/ui.h"
 #include "usart/printf.h"
 #include "xmem/xmem.h"
 
@@ -33,8 +34,11 @@ int main(void) {
     spi_master_init();
 
     oled_init();
+    ui_init();
 
     while (1) {
+        ui_event_push(&ui, ui_event_draw);
+        ui_dispatch(&ui);
         _delay_ms(1000);
     }
     return 0;

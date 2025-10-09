@@ -9,7 +9,7 @@
 #define UI_CONSTANTS_H
 
 // Must be >= 2 and ideally >= 3
-#define UI_DISPLAY_LINES 4U
+#define UI_DISPLAY_LINES 8U
 #define UI_BUFFER_SIZE   128U
 
 #endif /* UI_CONSTANTS_H */
