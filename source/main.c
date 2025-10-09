@@ -1,5 +1,7 @@
+// clang-format off
 // Has to be defined before the inclusion of delay.h
-#define F_CPU 4915200  // Clock Speed
+#include "constants.h"
+// clang-format on
 
 #include <avr/interrupt.h>
 #include <stdio.h>
@@ -29,22 +31,10 @@ int main(void) {
     sei();
 
     spi_master_init();
-    // printf("Spi \n\r");
 
     oled_init();
-    // printf("oled \n\r");
 
-    // const spi_transfer_t test2 = {.tx_data = test_data2,
-    //                               .rx_data = NULL,
-    //                               .length = sizeof(test_data2),
-    //                               .slave_idx = spi_slave_disp_d};
     while (1) {
-        oled_go_to_page_and_column(0x03, 0x10);
-        spi_transfer(&test);
-        // oled_go_to_page_and_column(0x06, 0x05);
-        // spi_transfer(&test_data2);
-        // spi_transfer();
-        // PORTB ^= (1 << PB2);
         _delay_ms(1000);
     }
     return 0;

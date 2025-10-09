@@ -37,7 +37,7 @@
 #define PORT_OLED_DC PORTB
 #define PIN_OLED_DC  PB2
 
-#define DDR_OLED_SS  DDRB
+#define DDR_OLED_SS  DDRB    /**/
 #define PORT_OLED_SS PORTB
 #define PIN_OLED_SS  PB3
 

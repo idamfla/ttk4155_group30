@@ -7,20 +7,37 @@
  */
 
 #include "oled.h"
+// clang-format off
+#include "../constants.h"
+// clang-format on
 
 #include <stdint.h>
+#include <string.h>
+#include <util/delay.h>
 
 #include "../gpio/gpio.h"
 
-#define F_CPU 8000000UL  // or 16000000UL, whatever your MCU clock is
-#include <util/delay.h>
+#define SPI_TRANSMIT(tranfer) \
+    transmit_done = false;    \
+    spi_transfer(&tranfer);
 
 #define DDR_OLED_RST  DDRD
 #define PORT_OLED_RST PORTD
 #define PIN_OLED_RST  PIN2
+#define BUFFER_SIZE   8U
+
+static const uint8_t init_cmds[] = {
+    0xAE,  // Display OFF
+    0xC8,  // COM scan direction remap
+    0x40,  // set ram to 0 or something
+    0x20,  // Memory mode
+    0x00,  // Memory mode = horizontal
+    0xA4,  // Resume to RAM display
+    0xA6,  // Normal display (not inverted)
+};
 
 static volatile bool transmit_done = false;
-static uint8_t _transmit_buffer[10];
+static uint8_t _transmit_buffer[BUFFER_SIZE];
 static void _spi_transfer_cmplt(void* param);
 
 static spi_transfer_t _transfer = {.rx_data = NULL,
@@ -35,13 +52,13 @@ static void _spi_transfer_cmplt(void* param) {
 }
 
 void oled_init(void) {
-    // Set pins as output
-
     // Put reset as output and turn reset high
     DDR_OLED_RST |= (1 << PIN_OLED_RST);
     SET_PIN(PORT_OLED_RST, PIN_OLED_RST);
 
-    // send init commands
+    oled_reset_display();
+
+    // Set up init commands
     uint8_t init_cmds_size = sizeof(init_cmds) / sizeof(init_cmds[0]);
     for (uint8_t i = 0; i < init_cmds_size; i++) {
         _transmit_buffer[i] = init_cmds[i];
@@ -49,18 +66,22 @@ void oled_init(void) {
     _transfer.length = init_cmds_size;
     _transfer.slave_idx = spi_slave_disp_c;
 
-    transmit_done = false;
-    spi_transfer(&_transfer);
+    // Send init commands
+    SPI_TRANSMIT(_transfer);
 
-    while (!transmit_done) {
-    }
-    oled_clear_display();
+    while (!transmit_done);
+
+    oled_clean_display();
+
+    // Ready display
+    _transfer.length = 1;
+    _transfer.slave_idx = spi_slave_disp_c;
+    _transmit_buffer[0] = 0xAF;  // Display ON
+    SPI_TRANSMIT(_transfer);
 }
 
 void oled_go_to_page_and_column(uint8_t page, uint8_t col) {
-    if ((page > 7) || (col > 127) || (!transmit_done)) {
-        return;
-    }
+    if ((page > 7) || (col > 127) || (!transmit_done)) return;
 
     _transmit_buffer[0] = 0x22;  // 0x22, set page address
     _transmit_buffer[1] = page;  // page, page start
@@ -72,26 +93,19 @@ void oled_go_to_page_and_column(uint8_t page, uint8_t col) {
     _transfer.length = 6;
 
     _transfer.slave_idx = spi_slave_disp_c;
-    spi_transfer(&_transfer);
-
-    // _transmit_buffer[0] = 0x40;    // data mode
-    // _transmit_buffer[1] = 5;     // one byte: one pixel on
-    // _transfer.length = 2;
-    // _transfer.slave_idx = spi_slave_disp_d;
-    // spi_transfer(&_transfer);
+    SPI_TRANSMIT(_transfer);
 }
 
-void oled_clear_display(void) {
+void oled_reset_display(void) {
     CLEAR_PIN(PORT_OLED_RST, PIN_OLED_RST);
-    _delay_ms(10);
+    _delay_us(10);
     SET_PIN(PORT_OLED_RST, PIN_OLED_RST);
+    _delay_us(10);
 }
 
-void oled_write_to_disp(uint8_t* tx_data, uint8_t length, void (*transfer_cmplt_cbk)(void* param),
-                        void* param) {
-    if (!transmit_done) {
-        return;
-    }
+void oled_write_to_display(uint8_t* tx_data, uint8_t length,
+                           void (*transfer_cmplt_cbk)(void* param), void* param) {
+    if (!transmit_done) return;
 
     for (uint8_t i = 0; i < length; i++) {
         _transmit_buffer[i] = tx_data[i];
@@ -104,4 +118,16 @@ void oled_write_to_disp(uint8_t* tx_data, uint8_t length, void (*transfer_cmplt_
     _transfer.length = length;
     spi_transfer(&_transfer);
     return;
+}
+
+void oled_clean_display(void) {
+    oled_go_to_page_and_column(0x00, 0x00);
+    memset(_transmit_buffer, 0U, BUFFER_SIZE);
+    while (!transmit_done);
+    _transfer.slave_idx = spi_slave_disp_d;
+    _transfer.length = BUFFER_SIZE;
+    for (uint8_t i = 0; i < 8U * 128U / BUFFER_SIZE; i++) {
+        SPI_TRANSMIT(_transfer);
+        while (!transmit_done);
+    }
 }
