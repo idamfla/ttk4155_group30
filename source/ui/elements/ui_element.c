@@ -8,6 +8,7 @@
 #include "ui_element.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #include "../fonts.h"
 #include "../ui_engine.h"
@@ -34,10 +35,15 @@ void ui_element_ctor(ui_element_t* const me, ui_element_on_event_t on_event) {
 static void ui_element_draw(ui_element_t const* const me, uint8_t* const buffer, uint8_t line) {
     (void)line; /* unused parameter */
     (void)me;   /* unused parameter */
-    (void)buffer;
-    // TODO: Implement a default draw function that indicates an error
-    // Prepare buffer for drawing
-    // Call ssd1309 draw function to draw one line
+    static const char msg[] = "Draw not implemented!";
+    uint8_t i = 0;
+    char c = msg[i];
+
+    memset(buffer, 0U, 128U);
+    while (c != '\0') {
+        memcpy(&buffer[i * 5U], &font5[c - FONTS_PRINTABLE_CHAR_START], 5U);
+        c = msg[++i];
+    }
 }
 
 ui_event_status_t ui_element_default_on_event(ui_element_t* const me, const ui_event_t event) {

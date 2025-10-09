@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 
+#include "../oled/oled.h"
 #include "ui_constants.h"
 
 static ui_event_t ui_event_pop(ui_t* const me);
@@ -86,7 +87,8 @@ void ui_draw_complete(ui_t* const me) {
         me->line = 0U;
     } else {
         ui_element_draw_vcall(active_element, me->graphics_buffer, me->line++);
-        // TODO: Send data to display
+        oled_write_to_disp(me->graphics_buffer, UI_BUFFER_SIZE, (void (*)(void*))ui_draw_complete,
+                           me);
     }
 }
 
@@ -112,7 +114,8 @@ void ui_dispatch(ui_t* const me) {
             return;
         }
         ui_element_draw_vcall(active_element, me->graphics_buffer, me->line++);
-        // TODO: Send data to display
+        oled_write_to_disp(me->graphics_buffer, UI_BUFFER_SIZE, (void (*)(void*))ui_draw_complete,
+                           me);
     } else if (ui_send_event(active_element, event) == ui_event_status_element_exit) {
         ui_element_pop(me);
     }

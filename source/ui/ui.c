@@ -10,13 +10,14 @@
 #include <stddef.h>
 
 #include "elements/ui_menu_static.h"
+#include "ui_constants.h"
 
 #define ELEMENT_STACK_SIZE 4
 #define EVENT_QUEUE_SIZE   5
 
 ui_t ui;
 
-static uint8_t _graphics_buffer[128];
+static uint8_t _graphics_buffer[UI_BUFFER_SIZE];
 static ui_element_t* _ui_element_stack[ELEMENT_STACK_SIZE];
 static ui_event_t _ui_event_buffer[EVENT_QUEUE_SIZE];
 static ui_menu_static_t _main_menu;
@@ -38,6 +39,10 @@ static ui_event_status_t main_menu_on_event(ui_menu_static_t* const me, const ui
     ui_event_status_t status;
     (void)me; /* unused parameter */
     switch (event) {
+        // case ui_event_button_select:
+        //     ui_element_push(&ui, (ui_element_t*)&_sub_menu);
+        //     status = ui_event_status_handled;
+        //     break;
         default:
             status = ui_event_status_ignored;
             break;
