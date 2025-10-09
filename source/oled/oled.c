@@ -29,7 +29,7 @@
 static const uint8_t init_cmds[] = {
     0xAE,  // Display OFF
     0xC8,  // COM scan direction remap
-    0x40,  // set ram to 0 or something
+    0xA1,  // Segment remap
     0x20,  // Memory mode
     0x00,  // Memory mode = horizontal
     0xA4,  // Resume to RAM display
@@ -106,10 +106,6 @@ void oled_reset_display(void) {
 void oled_write_to_display(uint8_t* tx_data, uint8_t length,
                            void (*transfer_cmplt_cbk)(void* param), void* param) {
     if (!transmit_done) return;
-
-    for (uint8_t i = 0; i < length; i++) {
-        _transmit_buffer[i] = tx_data[i];
-    }
 
     _transfer.tx_data = tx_data;
     _transfer.slave_idx = spi_slave_disp_d;
