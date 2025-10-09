@@ -12,24 +12,12 @@
 #include "../spi/spi.h"
 #include "../spi/spi_queue.h"
 
-// idk
-#define DDR_OLED_DC  DDRC
-#define PORT_OLED_DC PORTC
-#define PIN_OLED_DC  PC0
-
-#define DDR_OLED_RST  DDRC
-#define PORT_OLED_RST PORTC
-#define PIN_OLED_RST  PC1
-
-#define DDR_OLED_SS  DDRB
-#define PORT_OLED_SS PORTB
-#define PIN_OLED_SS  SS2
-
-void _spi_transfer_cplt(void);
-void _spi_transfer_started(void);
 void oled_reset(void);
 void oled_init(void);
 void oled_go_to_page_and_column(uint8_t page, uint8_t col);
+void oled_clear_display(void);
+void oled_write_to_disp(uint8_t* tx_data, uint8_t length, void (*transfer_cmplt_cbk)(void* param),
+                        void* param);
 
 static const uint8_t init_cmds[] = {
     0xAE,  // Display OFF
@@ -47,5 +35,5 @@ static const uint8_t init_cmds[] = {
     0xAF,  // Display ON
     0xA4,  // Resume to RAM display
     0xA6,  // Normal display (not inverted)
-    // 0xA5 //Turn all light on
+    0xA5   // Turn all light on
 };

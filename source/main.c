@@ -6,8 +6,8 @@
 #include <util/delay.h>
 
 #include "max156/max156.h"
+#include "oled/oled.h"
 #include "spi/spi.h"
-#include "ssd1309/oled.h"
 #include "usart/printf.h"
 #include "xmem/xmem.h"
 
@@ -21,8 +21,7 @@ const spi_transfer_t test = {.tx_data = test_data,
                              .rx_data = NULL,
                              .length = sizeof(test_data),
                              .slave_idx = spi_slave_disp_d,
-                             .transfer_cmplt_cbk = NULL,
-                             .transfer_started = NULL};
+                             .transfer_cmplt_cbk = NULL};
 
 int main(void) {
     printf_init(USART0, UBRR0);

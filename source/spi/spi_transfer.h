@@ -7,9 +7,9 @@
 
 #pragma once
 #ifndef SPI_TRANSFER_H
-#define SPI_TRANSFER_H
+#    define SPI_TRANSFER_H
 
-#include <stdint.h>
+#    include <stdint.h>
 
 /**
  * Data to transfer
@@ -23,8 +23,8 @@ typedef struct {
     volatile uint8_t* rx_data;
     uint8_t length;
     uint8_t slave_idx;
-    void (*transfer_cmplt_cbk)(void);
-    void (*transfer_started)(void);
+    void (*transfer_cmplt_cbk)(void* param);
+    void* param;
 } spi_transfer_t;
 
 #endif /* SPI_TRANSFER_H */
