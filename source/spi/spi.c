@@ -119,8 +119,12 @@ void spi_master_init(void) {
     DDR_OLED_SS |= (1 << PIN_OLED_SS);
 
     // DDR_SPI &= ~(1 << PB6);  // MISO as input
-    /* Enable SPI, Master, set clock rate fck/16, interrupt*/
-    SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR0) | (1 << SPIE);
+    // Max frequency of slaves:
+    // - MCP2515 (CAN): 10 MHz */
+    // - SSD1309 (OLED): 10 MHz
+    // - IO board: not specified (at least 10 MHz)
+    /* Enable SPI, Master, set clock rate fck/4 (~1.2 MHz), interrupt*/
+    SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPIE);
 
     /* Set slave pins as output, and set them high (SS\bar) */
     SET_PIN(PORT_IO_SS, PIN_IO_SS);
