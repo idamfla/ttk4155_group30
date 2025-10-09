@@ -53,6 +53,7 @@ static void _spi_transfer_cmplt(void* param) {
     transmit_done = true;
 }
 
+/** @brief Initialize the oled */
 void oled_init(void) {
     // Put reset as output and turn reset high
     DDR_OLED_RST |= (1 << PIN_OLED_RST);
@@ -82,6 +83,11 @@ void oled_init(void) {
     SPI_TRANSMIT(_transfer);
 }
 
+/**
+ * @brief Sets start page and start column
+ * @param page index of the page we want to write on
+ * @param column the column we want to start to write on
+ */
 void oled_go_to_page_and_column(uint8_t page, uint8_t col) {
     if ((page > 7) || (col > 127) || (!transmit_done)) return;
 
@@ -98,6 +104,7 @@ void oled_go_to_page_and_column(uint8_t page, uint8_t col) {
     SPI_TRANSMIT(_transfer);
 }
 
+/** @brief Resets the OLED display */
 void oled_reset_display(void) {
     CLEAR_PIN(PORT_OLED_RST, PIN_OLED_RST);
     _delay_us(10);
@@ -105,6 +112,13 @@ void oled_reset_display(void) {
     _delay_us(10);
 }
 
+/**
+ * @brief Writes to the display
+ * @param tx_data pointer to the data we want to send
+ * @param length the length data length
+ * @param transfer_cmplt_cbk the callback function
+ * @param param the parameter for the callback function
+ */
 void oled_write_to_display(uint8_t* tx_data, uint8_t length,
                            void (*transfer_cmplt_cbk)(void* param), void* param) {
     if (!transmit_done) return;
@@ -118,6 +132,7 @@ void oled_write_to_display(uint8_t* tx_data, uint8_t length,
     return;
 }
 
+/** @brief Sets every pixel off */
 void oled_clean_display(void) {
     oled_go_to_page_and_column(0x00, 0x00);
     while (!transmit_done);
