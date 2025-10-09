@@ -28,8 +28,10 @@ ui_menu_static_t _ui_menu_static_default = {
  */
 void ui_menu_static_ctor(ui_menu_static_t *const me, ui_menu_static_on_event_t on_event,
                          const char **const item_texts, uint8_t num_items) {
-    static const ui_element_vtable_t vtable = {
-        .draw = (void (*)(const ui_element_t *const, uint8_t *const, uint8_t))ui_menu_static_draw};
+    // static const ui_element_vtable_t vtable = {
+    //     .draw = (void (*)(const ui_element_t *const, uint8_t *const,
+    //     uint8_t))ui_menu_static_draw};
+
     ui_element_ctor(&me->super, (ui_element_on_event_t)on_event);
 
     // me->super.vptr = &vtable;
