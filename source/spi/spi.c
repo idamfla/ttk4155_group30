@@ -57,11 +57,10 @@ static volatile uint16_t _data_idx;
 static spi_transfer_t _transfer;
 static volatile bool _transfer_active = false;
 
-static void _spi_rxtx(void);
 static void _spi_slave_select(uint8_t slave_idx);
 static void _spi_slave_deselect(uint8_t slave_idx);
 
-static void _spi_rxtx(void) {
+static inline void _spi_rxtx(void) {
     if (_transfer.tx_data) {
         SPDR = _transfer.tx_data[_data_idx];
     } else {
@@ -90,7 +89,7 @@ static void _spi_slave_select(uint8_t slave_idx) {
 static void _spi_slave_deselect(uint8_t slave_idx) {
     switch (slave_idx) {
         case spi_slave_disp_d:
-            SET_PIN(PORT_OLED_SS, PIN_IO_SS);
+            SET_PIN(PORT_OLED_SS, PIN_OLED_SS);
             break;
         case spi_slave_disp_c:
             SET_PIN(PORT_OLED_SS, PIN_OLED_SS);

@@ -48,11 +48,11 @@ int main(void) {
     ui_init();
 
     while (1) {
-        // ui_event_push(&ui, ui_event_draw);
-        //  io_get_touch_pad(on_touch_pad_data);
+        ui_event_push(&ui, ui_event_draw);
+        io_get_touch_pad(on_touch_pad_data);
         //  io_get_buttons(on_button_data);
         ui_dispatch(&ui);
-        _delay_ms(100);
+        _delay_ms(500);
     }
     return 0;
 }
