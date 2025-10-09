@@ -37,7 +37,7 @@
 #define PORT_OLED_DC PORTB
 #define PIN_OLED_DC  PB2
 
-#define DDR_OLED_SS  DDRB    /**/
+#define DDR_OLED_SS  DDRB
 #define PORT_OLED_SS PORTB
 #define PIN_OLED_SS  PB3
 
@@ -62,7 +62,11 @@ static void _spi_slave_select(uint8_t slave_idx);
 static void _spi_slave_deselect(uint8_t slave_idx);
 
 static void _spi_rxtx(void) {
-    SPDR = _transfer.tx_data[_data_idx++];
+    if (_transfer.tx_data) {
+        SPDR = _transfer.tx_data[_data_idx];
+    } else {
+        SPDR = 0;
+    }
 }
 
 static void _spi_slave_select(uint8_t slave_idx) {
@@ -124,7 +128,7 @@ void spi_master_init(void) {
     // - SSD1309 (OLED): 10 MHz
     // - IO board: not specified (at least 10 MHz)
     /* Enable SPI, Master, set clock rate fck/4 (~1.2 MHz), interrupt*/
-    SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPIE);
+    SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPIE);  // | (1 << SPR0);
 
     /* Set slave pins as output, and set them high (SS\bar) */
     SET_PIN(PORT_IO_SS, PIN_IO_SS);
@@ -143,6 +147,7 @@ ISR(SPI_STC_vect) {
     if (_transfer.rx_data) {
         _transfer.rx_data[_data_idx] = SPDR;
     }
+    ++_data_idx;
     if (_data_idx < _transfer.length) {
         _spi_rxtx();
     } else {

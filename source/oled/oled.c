@@ -17,9 +17,11 @@
 
 #include "../gpio/gpio.h"
 
-#define SPI_TRANSMIT(tranfer) \
-    transmit_done = false;    \
-    spi_transfer(&tranfer);
+#define SPI_TRANSMIT(tranfer)   \
+    do {                        \
+        transmit_done = false;  \
+        spi_transfer(&tranfer); \
+    } while (0);
 
 #define DDR_OLED_RST  DDRD
 #define PORT_OLED_RST PORTD
@@ -118,8 +120,8 @@ void oled_write_to_display(uint8_t* tx_data, uint8_t length,
 
 void oled_clean_display(void) {
     oled_go_to_page_and_column(0x00, 0x00);
-    memset(_transmit_buffer, 0U, BUFFER_SIZE);
     while (!transmit_done);
+    memset(_transmit_buffer, 0U, BUFFER_SIZE);
     _transfer.slave_idx = spi_slave_disp_d;
     _transfer.length = BUFFER_SIZE;
     for (uint8_t i = 0; i < 8U * 128U / BUFFER_SIZE; i++) {
