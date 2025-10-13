@@ -96,13 +96,14 @@ typedef void (*io_get_touch_slider_cmplt_t)(io_touch_slider_t* touch_slider);
 typedef void (*io_get_joystick_cmplt_t)(io_joystick_t* joystick);
 typedef void (*io_get_buttons_cmplt_t)(io_buttons_t* buttons);
 typedef void (*io_get_info_cmplt_t)(io_info_t* info);
+typedef void (*io_set_cmplt_t)(void);
 
-void io_get_touch_pad(io_get_touch_pad_cmplt_t cmplt_cbk);
-void io_get_touch_slider(io_get_touch_slider_cmplt_t cmplt_cbk);
-void io_get_joystick(io_get_joystick_cmplt_t cmplt_cbk);
-void io_get_buttons(io_get_buttons_cmplt_t cmplt_cbk);
-void io_get_info(io_get_info_cmplt_t cmplt_cbk);
-void io_set_led_on_off(uint8_t led, bool on);
-void io_set_led_pwm(uint8_t led, uint8_t dc);
+bool io_get_touch_pad(io_get_touch_pad_cmplt_t cmplt_cbk);
+bool io_get_touch_slider(io_get_touch_slider_cmplt_t cmplt_cbk);
+bool io_get_joystick(io_get_joystick_cmplt_t cmplt_cbk);
+bool io_get_buttons(io_get_buttons_cmplt_t cmplt_cbk);
+bool io_get_info(io_get_info_cmplt_t cmplt_cbk);
+bool io_set_led_on_off(io_led_on_off_t* led_state, io_set_cmplt_t cmplt_cbk);
+bool io_set_led_pwm(io_led_pwm_t* led_state, io_set_cmplt_t cmplt_cbk);
 
 #endif /* IO_BOARD_H */
