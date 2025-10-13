@@ -30,6 +30,18 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     union {
+        uint8_t right;
+        struct {
+            uint8_t SR1 : 1;
+            uint8_t SR2 : 1;
+            uint8_t SR3 : 1;
+            uint8_t SR4 : 1;
+            uint8_t SR5 : 1;
+            uint8_t SR6 : 1;
+            uint8_t : 2;
+        };
+    };
+    union {
         uint8_t left;
         struct {
             uint8_t SL1 : 1;
@@ -40,18 +52,6 @@ typedef struct __attribute__((packed)) {
             uint8_t SL6 : 1;
             uint8_t SL7 : 1;
             uint8_t : 1;
-        };
-    };
-    union {
-        uint8_t right;
-        struct {
-            uint8_t SR1 : 1;
-            uint8_t SR2 : 1;
-            uint8_t SR3 : 1;
-            uint8_t SR4 : 1;
-            uint8_t SR5 : 1;
-            uint8_t SR6 : 1;
-            uint8_t : 2;
         };
     };
     union {

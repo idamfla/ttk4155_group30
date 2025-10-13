@@ -7,6 +7,7 @@
 
 #include "ui_engine.h"
 
+#include <avr/interrupt.h>
 #include <stddef.h>
 
 #include "../oled/oled.h"
@@ -55,7 +56,9 @@ void ui_element_pop(ui_t* const me) {
 
 bool ui_event_push(ui_t* const me, const ui_event_t event) {
     ui_event_queue_t* queue = &me->event_queue;
+    cli();  // Disable interrupts
     if (queue->size >= queue->max_size) {
+        sei();  // Enable interrupts
         return false;
     }
     ++queue->size;
@@ -66,9 +69,18 @@ bool ui_event_push(ui_t* const me, const ui_event_t event) {
     } else {
         queue->back = queue->buffer + queue->max_size - 1;
     }
+    sei();  // Enable interrupts
     return true;
 }
 
+/**
+ * @brief Pop an event from the event queue
+ * @param me Pointer to the ui instance
+ * @return The event at the front of the queue
+ * @attention This function does not check if the queue is empty. The caller must ensure that the
+ * queue is not empty.
+ * @attention This function must be called with interrupts disabled.
+ */
 static ui_event_t ui_event_pop(ui_t* const me) {
     ui_event_queue_t* queue = &me->event_queue;
     ui_event_t front = *(queue->front);
@@ -94,19 +106,23 @@ void ui_draw_complete(ui_t* const me) {
 
 static ui_event_status_t ui_send_event(ui_element_t* element, const ui_event_t event) {
     ui_event_status_t status;
+    ui_element_t* parent_element = element;
     do {
-        element = element->parent;
-        status = element->on_event(element, event);
+        status = parent_element->on_event(element, event);
+        parent_element = parent_element->parent;
         // No check for parent == NULL needed, as the root element must handle all events
     } while (status == ui_event_status_ignored);
     return status;
 }
 
 void ui_dispatch(ui_t* const me) {
+    cli();  // Disable interrupts
     if (me->event_queue.size == 0) {
+        sei();  // Enable interrupts
         return;
     }
     ui_event_t event = ui_event_pop(me);
+    sei();  // Enable interrupts
 
     ui_element_t* active_element = (*me->element_stack.stack_top);
     if (event == ui_event_draw) {

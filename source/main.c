@@ -33,14 +33,37 @@ void on_touch_pad_data(io_touch_pad_t* touch_pad) {
 }
 
 void on_button_data(io_buttons_t* buttons) {
+    static io_buttons_t prev_buttons = {0};
+    if (buttons->SR5 && !prev_buttons.SR5) {
+        ui_event_push(&ui, ui_event_button_up);
+    }
+    if (buttons->SR6 && !prev_buttons.SR6) {
+        ui_event_push(&ui, ui_event_button_down);
+    }
+    if (buttons->nav_button && !prev_buttons.nav_button) {
+        ui_event_push(&ui, ui_event_button_select);
+    }
+    if (buttons->nav_up && !prev_buttons.nav_up) {
+        ui_event_push(&ui, ui_event_button_up);
+    }
+    if (buttons->nav_down && !prev_buttons.nav_down) {
+        ui_event_push(&ui, ui_event_button_down);
+    }
+    if (buttons->nav_left && !prev_buttons.nav_left) {
+        ui_event_push(&ui, ui_event_button_left);
+    }
+    if (buttons->nav_right && !prev_buttons.nav_right) {
+        ui_event_push(&ui, ui_event_button_right);
+    }
     printf("Buttons - Left: %d, Right: %d, Nav: %d\r\n", buttons->left, buttons->right,
            buttons->nav);
+    prev_buttons = *buttons;
 }
 
 int main(void) {
     printf_init(USART0, UBRR0);
     xmem_init();
-    sei();
+    sei();  // Enable global interrupts
 
     spi_master_init();
 
@@ -49,8 +72,11 @@ int main(void) {
 
     while (1) {
         ui_event_push(&ui, ui_event_draw);
-        io_get_touch_pad(on_touch_pad_data);
-        //  io_get_buttons(on_button_data);
+        // io_get_touch_pad(on_touch_pad_data);
+        io_get_buttons(on_button_data);
+        ui_dispatch(&ui);
+        ui_dispatch(&ui);
+        ui_dispatch(&ui);
         ui_dispatch(&ui);
         _delay_ms(500);
     }
