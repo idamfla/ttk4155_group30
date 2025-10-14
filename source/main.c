@@ -17,6 +17,7 @@
 
 #define BAUD  38400  // Baud rate
 #define UBRR0 (F_CPU / 16 / BAUD - 1)
+#define FPS   20
 
 uint8_t test_data[] = {5};
 uint8_t test_data2[] = {10};
@@ -55,8 +56,8 @@ void on_button_data(io_buttons_t* buttons) {
     if (buttons->nav_right && !prev_buttons.nav_right) {
         ui_event_push(&ui, ui_event_button_right);
     }
-    printf("Buttons - Left: %d, Right: %d, Nav: %d\r\n", buttons->left, buttons->right,
-           buttons->nav);
+    // printf("Buttons - Left: %d, Right: %d, Nav: %d\r\n", buttons->left, buttons->right,
+    //        buttons->nav);
     prev_buttons = *buttons;
 }
 
@@ -70,15 +71,22 @@ int main(void) {
     oled_init();
     ui_init();
 
+    TCCR1B |= (1 << CS10) | (1 << CS11);  // Prescaler = 64
+    TCCR1B |= (1 << WGM12);               // Set WGM12 bit for CTC mode (Mode 4)
+    OCR1A = F_CPU / 64 / FPS - 1;         // Set compare value for desired frequency
+    TIMSK |= (1 << OCIE1A);               // Enable Timer1 Compare A interrupt
+
     while (1) {
-        ui_event_push(&ui, ui_event_draw);
+        // ui_event_push(&ui, ui_event_draw);
         // io_get_touch_pad(on_touch_pad_data);
-        io_get_buttons(on_button_data);
         ui_dispatch(&ui);
-        ui_dispatch(&ui);
-        ui_dispatch(&ui);
-        ui_dispatch(&ui);
-        _delay_ms(500);
+        // _delay_ms(500);
     }
     return 0;
+}
+
+// Execute every 1/FPS seconds
+ISR(TIMER1_COMPA_vect) {
+    io_get_buttons(on_button_data);
+    ui_event_push(&ui, ui_event_draw);
 }
