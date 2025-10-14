@@ -54,6 +54,11 @@ void ui_element_pop(ui_t* const me) {
     // ui_send_event(*me->element_stack.stack_top, ui_event_element_reentry);
 }
 
+static inline uint8_t ui_element_stack_size(const ui_t* const me) {
+    return (uint8_t)(me->element_stack.stack + me->element_stack.stack_capacity -
+                     me->element_stack.stack_top);
+}
+
 bool ui_event_push(ui_t* const me, const ui_event_t event) {
     ui_event_queue_t* queue = &me->event_queue;
     cli();  // Disable interrupts
@@ -132,7 +137,8 @@ void ui_dispatch(ui_t* const me) {
         ui_element_draw_vcall(active_element, me->graphics_buffer, me->line++);
         oled_write_to_display(me->graphics_buffer, UI_BUFFER_SIZE,
                               (void (*)(void*))ui_draw_complete, me);
-    } else if (ui_send_event(active_element, event) == ui_event_status_element_exit) {
+    } else if (ui_send_event(active_element, event) == ui_event_status_element_exit &&
+               ui_element_stack_size(me) > 1U) {
         ui_element_pop(me);
     }
 }
