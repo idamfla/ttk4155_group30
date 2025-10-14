@@ -3,7 +3,7 @@ name: Build and publish Doxygen docs
 on:
   push:
     branches:
-      - ci
+      - main
   workflow_dispatch:
 
 permissions:
