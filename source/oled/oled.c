@@ -59,7 +59,7 @@ void oled_init(void) {
     DDR_OLED_RST |= (1 << PIN_OLED_RST);
     SET_PIN(PORT_OLED_RST, PIN_OLED_RST);
 
-    oled_reset_display();
+    oled_reset();
 
     // Set up init commands
     uint8_t init_cmds_size = sizeof(init_cmds) / sizeof(init_cmds[0]);
@@ -74,7 +74,7 @@ void oled_init(void) {
 
     while (!transmit_done);
 
-    oled_clean_display();
+    oled_clear();
 
     // Ready display
     _transfer.length = 1;
@@ -105,7 +105,7 @@ void oled_go_to_page_and_column(uint8_t page, uint8_t col) {
 }
 
 /** @brief Resets the OLED display */
-void oled_reset_display(void) {
+void oled_reset(void) {
     CLEAR_PIN(PORT_OLED_RST, PIN_OLED_RST);
     _delay_us(10);
     SET_PIN(PORT_OLED_RST, PIN_OLED_RST);
@@ -132,8 +132,8 @@ void oled_write_to_display(uint8_t* tx_data, uint8_t length,
     return;
 }
 
-/** @brief Sets every pixel off */
-void oled_clean_display(void) {
+/** @brief Sets every pixel clear */
+void oled_clear(void) {
     oled_go_to_page_and_column(0x00, 0x00);
     while (!transmit_done);
     memset(_transmit_buffer, 0U, BUFFER_SIZE);
