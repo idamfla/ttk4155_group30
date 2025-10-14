@@ -13,6 +13,6 @@
 
 #endif /* CAN_H */
 
-void mcp2515_init();
-uint8_t mcp2515_read(uint8_t address);
-void mcp2515_reset(void);
+void can_init();
+uint8_t can_read(uint8_t address);
+void can_reset(void);

@@ -6,25 +6,35 @@
  */
 
 #include "can.h"
+// clang-format off
+#include "../constants.h"
+// clang-format on
 
+#include <util/delay.h>
+
+#include "../gpio/gpio.h"
+#include "../spi/spi.h"
+#include "../oled/oled.h"
 #include "mcp2515.h"
-#include "spi.h"
 
-#define PORT_MCP2515_RST 0  // TODO find a nice place for this
-#define PIN_MCP2515_RST  0  // TODO find a nice place for this
-#define CAN_CS           0  // TODO find a nice place for this
+#define DDR_CAN_CS  DDRB   // TODO find place
+#define PORT_CAN_CS PORTB  // TODO find place
+#define PIN_CAN_CS  PIN0   // TODO find place
+
+#define DDR_CAN_INTERRUPT  DDRB   // TODO find place
+#define PORT_CAN_INTERRUPT PORTB  // TODO find place
+#define PIN_CAN_INTERRUPT  PIN0   // TODO find place
 
 /** @brief Initialize the MCP2515 */
-void mcp2515_init() {
-    uint8_t value;
-
+void can_init() {
     spi_master_init();
-    mcp2515_reset();  // Send reset-command
+    can_reset();  // Send reset-command
 
     // Self test
-    value = mcp2515_read(MCP_CANSTAT);
+    uint8_t value;
+    value = can_read(MCP_CANSTAT);
     if ((value & MODE_MASK) != MODE_CONFIG) {
-        printf("MCP2515 is NOT in configuration mode after reset!\n");
+        printf("CAN (MCP2515) is NOT in configuration mode after reset!\n");
         return;
     }
 }
@@ -33,23 +43,21 @@ void mcp2515_init() {
  * @brief does some reading i think
  * @param address i think this is the address we want to read from
  */
-uint8_t mcp2515_read(uint8_t address) {
+uint8_t can_read(uint8_t address) {
     (void)0;  // TODO implement variables and stuff
     uint8_t result;
-    PORTB &= ~(1 << CAN_CS);
+    PORTB &= ~(1 << PIN_CAN_CS);
 
-    spi_write(MCP_READ);
-    spi_write(address);
-    result = spi_read();
+    // spi_write(MCP_READ);
+    // spi_write(address);
+    // result = spi_read();
 
-    PORTB |= (1 << CAN_CS);
-    return result;
+    PORTB |= (1 << PIN_CAN_CS);
+    return address;  // TODO remove later
+    // return result;
 }
 
 /** @brief Resets the OLED display */
-void mcp2515_reset(void) {
-    CLEAR_PIN(PORT_MCP2515_RST, PIN_MCP2515_RST);
-    _delay_us(10);
-    SET_PIN(PORT_MCP2515_RST, PIN_MCP2515_RST);
-    _delay_us(10);
+void can_reset(void) {
+    oled_reset();
 }
