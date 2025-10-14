@@ -15,9 +15,10 @@
 #include "usart/printf.h"
 #include "xmem/xmem.h"
 
-#define BAUD  38400  // Baud rate
-#define UBRR0 (F_CPU / 16 / BAUD - 1)
-#define FPS   20
+#define BAUD        38400  // Baud rate
+#define UBRR0       (F_CPU / 16 / BAUD - 1)
+#define UPDATE_RATE 20U  // Hz
+#include "timer/timer.h"
 
 uint8_t test_data[] = {5};
 uint8_t test_data2[] = {10};
@@ -76,11 +77,7 @@ int main(void) {
 
     oled_init();
     ui_init();
-
-    TCCR1B |= (1 << CS10) | (1 << CS11);  // Prescaler = 64
-    TCCR1B |= (1 << WGM12);               // Set WGM12 bit for CTC mode (Mode 4)
-    OCR1A = F_CPU / 64 / FPS - 1;         // Set compare value for desired frequency
-    TIMSK |= (1 << OCIE1A);               // Enable Timer1 Compare A interrupt
+    timer1_init(UPDATE_RATE);
 
     while (1) {
         // ui_event_push(&ui, ui_event_draw);
@@ -91,7 +88,7 @@ int main(void) {
     return 0;
 }
 
-// Execute every 1/FPS seconds
+// Executed at UPDATE_RATE Hz
 ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
