@@ -61,6 +61,10 @@ static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_t *const
                     me->current_item < me->num_items - 1U) {
                     ++me->scroll_pos;
                 }
+            } else {
+                // Wrap around to the first item
+                me->current_item = 0;
+                me->scroll_pos = 0;
             }
             status = ui_event_status_handled;
             break;
@@ -71,6 +75,14 @@ static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_t *const
                 // at the first item).
                 if ((uint8_t)(me->current_item - me->scroll_pos) == 0U && me->current_item != 0U) {
                     --me->scroll_pos;
+                }
+            } else {
+                // Wrap around to the last item
+                me->current_item = me->num_items - 1U;
+                if (me->num_items > UI_DISPLAY_LINES) {
+                    me->scroll_pos = me->num_items - UI_DISPLAY_LINES;
+                } else {
+                    me->scroll_pos = 0U;
                 }
             }
             status = ui_event_status_handled;
