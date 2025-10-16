@@ -36,18 +36,6 @@ void on_touch_pad_data(io_touch_pad_t* touch_pad) {
 
 void on_button_data(io_buttons_t* buttons) {
     static io_buttons_t prev_buttons = {0};
-    if (buttons->SR5 && !prev_buttons.SR5) {
-        ui_event_push(&ui, ui_event_button_up);
-    }
-    if (buttons->SR6 && !prev_buttons.SR6) {
-        ui_event_push(&ui, ui_event_button_down);
-    }
-    if (buttons->SR4 && !prev_buttons.SR4) {
-        ui_event_push(&ui, ui_event_button_select);
-    }
-    if (buttons->SR1 && !prev_buttons.SR1) {
-        ui_event_push(&ui, ui_event_button_left);
-    }
     if (buttons->nav_button && !prev_buttons.nav_button) {
         ui_event_push(&ui, ui_event_button_select);
     }

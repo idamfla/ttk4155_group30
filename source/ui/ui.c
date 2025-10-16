@@ -46,10 +46,8 @@ static ui_event_status_t main_menu_on_event(ui_menu_static_t* const me, const ui
     ui_event_status_t status;
     (void)me; /* unused parameter */
     switch (event) {
-        // case ui_event_button_select:
-        //     ui_element_push(&ui, (ui_element_t*)&_sub_menu);
-        //     status = ui_event_status_handled;
-        //     break;
+        // Intentionally fall through
+        case ui_event_button_right:
         case ui_event_button_select:
             if (me->current_item == 3U) {
                 ui_element_push(&ui, (ui_element_t*)&_sub_menu);

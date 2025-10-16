@@ -57,11 +57,11 @@ typedef struct __attribute__((packed)) {
     union {
         uint8_t nav;
         struct {
-            uint8_t nav_up : 1;
+            uint8_t nav_button : 1;
+            uint8_t nav_right : 1;
             uint8_t nav_down : 1;
             uint8_t nav_left : 1;
-            uint8_t nav_right : 1;
-            uint8_t nav_button : 1;
+            uint8_t nav_up : 1;
             uint8_t : 3;
         };
     };
