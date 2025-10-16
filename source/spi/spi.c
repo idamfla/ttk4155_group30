@@ -45,6 +45,10 @@
 #define PORT_IO_SS PORTB
 #define PIN_IO_SS  PB4
 
+#define DDR_CAN_SS  DDRD
+#define PORT_CAN_SS PORTD
+#define PIN_CAN_SS  PD3
+
 #define QUEUE_SIZE 10
 
 static spi_transfer_t _spi_queue_buffer[QUEUE_SIZE];
@@ -81,6 +85,9 @@ static void _spi_slave_select(uint8_t slave_idx) {
         case spi_slave_io:
             CLEAR_PIN(PORT_IO_SS, PIN_IO_SS);
             break;
+        case spi_slave_can:
+            CLEAR_PIN(PORT_CAN_SS, PIN_CAN_SS);
+            break;
         default:
             break;
     }
@@ -96,6 +103,9 @@ static void _spi_slave_deselect(uint8_t slave_idx) {
             break;
         case spi_slave_io:
             SET_PIN(PORT_IO_SS, PIN_IO_SS);
+            break;
+        case spi_slave_can:
+            SET_PIN(PORT_CAN_SS, PIN_CAN_SS);
             break;
         default:
             break;
@@ -125,6 +135,7 @@ void spi_master_init(void) {
     DDR_SPI_SCK |= (1 << PIN_SPI_SCK);
     DDR_OLED_DC |= (1 << PIN_OLED_DC);
     DDR_OLED_SS |= (1 << PIN_OLED_SS);
+    DDR_CAN_SS |= (1 << PIN_CAN_SS);
 
     // DDR_SPI &= ~(1 << PB6);  // MISO as input
     // Max frequency of slaves:
