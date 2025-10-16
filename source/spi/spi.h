@@ -19,8 +19,7 @@ typedef enum {
     spi_slave_can,
 } spi_slave_t;
 
-
-
 void _spi_next_transfer(void);
 void spi_master_init(void);
 bool spi_transfer(const spi_transfer_t* transfer);
+void spi_ll_transmit_blocking(uint8_t data);

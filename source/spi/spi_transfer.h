@@ -23,8 +23,10 @@ typedef struct {
     volatile uint8_t* rx_data;
     uint8_t length;
     uint8_t slave_idx;
-    void (*transfer_cmplt_cbk)(void* param);
-    void* param;
+    void (*transfer_cmplt_cbk)(void* cmplt_param);
+    void* cmplt_param;
+    // Called after slave select, before first byte is sent
+    void (*transfer_start_cbk)(void);
 } spi_transfer_t;
 
 #endif /* SPI_TRANSFER_H */

@@ -5,6 +5,11 @@
  * @date 2025-10-09
  */
 
+// clang-format off
+#include "../constants.h"
+#include <util/delay.h>
+// clang-format on
+
 #include "io_board.h"
 
 #include <stddef.h>
@@ -21,11 +26,11 @@ typedef enum {
     io_cmd_get_info = 0x07,
 } io_command_t;
 
-typedef enum {
-    io_transfer_type_get,
-    io_transfer_type_set,
-    io_transfer_cmd,
-} io_transfer_type_t;
+// typedef enum {
+//     io_transfer_type_get,
+//     io_transfer_type_set,
+//     io_transfer_cmd,
+// } io_transfer_type_t;
 
 typedef struct {
     union {
@@ -35,40 +40,33 @@ typedef struct {
     bool get;
 } io_transfer_param_t;
 
-void io_cmd_cmplt(void *unused);
+void io_spi_start_cbk(void);
 void io_transfer_cmplt(void *unused);
 
 volatile uint8_t _rx_data[35];
-uint8_t _tx_data[3];
+volatile io_command_t _cmd;
+io_transfer_param_t _transfer_cmplt_param;
+static volatile bool _transfer_active = false;
 
-io_transfer_param_t _transfer_param;
-
-static spi_transfer_t _transfer_cmd = {
-    .rx_data = NULL,
-    .tx_data = _tx_data,
-    .length = 1,
-    .slave_idx = spi_slave_io,
-    .transfer_cmplt_cbk = io_cmd_cmplt,
-};
 static spi_transfer_t _transfer_data = {
     .slave_idx = spi_slave_io,
     .transfer_cmplt_cbk = io_transfer_cmplt,
-    .param = &_transfer_param,
+    .cmplt_param = &_transfer_cmplt_param,
+    .transfer_start_cbk = io_spi_start_cbk,
 };
-static volatile bool _transfer_active = false;
 
-void io_cmd_cmplt(void *unused) {
-    (void)unused;  // unused
-    spi_transfer(&_transfer_data);
+void io_spi_start_cbk(void) {
+    spi_ll_transmit_blocking((uint8_t)_cmd);
+    _delay_us(24);
 }
 
 void io_transfer_cmplt(void *unused) {
     (void)unused;  // unused
-    if (_transfer_param.get) {
-        _transfer_param.get_cmplt_cbk(_transfer_data.rx_data);
+    if (_transfer_cmplt_param.get) {
+        _transfer_cmplt_param.get_cmplt_cbk(_transfer_data.rx_data);
     } else {
-        if (_transfer_param.set_cmplt_cbk) {
-            _transfer_param.set_cmplt_cbk();
+        if (_transfer_cmplt_param.set_cmplt_cbk) {
+            _transfer_cmplt_param.set_cmplt_cbk();
         }
     }
     _transfer_active = false;
@@ -85,16 +83,16 @@ bool io_get_touch_pad(io_get_touch_pad_cmplt_t cmplt_cbk) {
         return false;
     }
     _transfer_active = true;
-    _tx_data[0] = io_cmd_get_touch_pad;
+    _cmd = io_cmd_get_touch_pad;
 
     _transfer_data.tx_data = NULL;
     _transfer_data.rx_data = _rx_data;
     _transfer_data.length = sizeof(io_touch_pad_t);
 
-    _transfer_param.get = true;
-    _transfer_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
+    _transfer_cmplt_param.get = true;
+    _transfer_cmplt_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
 
-    return spi_transfer(&_transfer_cmd);
+    return spi_transfer(&_transfer_data);
 }
 
 /**
@@ -109,16 +107,16 @@ bool io_get_touch_slider(io_get_touch_slider_cmplt_t cmplt_cbk) {
         return false;
     }
     _transfer_active = true;
-    _tx_data[0] = io_cmd_get_touch_slider;
+    _cmd = io_cmd_get_touch_slider;
 
     _transfer_data.tx_data = NULL;
     _transfer_data.rx_data = _rx_data;
     _transfer_data.length = sizeof(io_touch_slider_t);
 
-    _transfer_param.get = true;
-    _transfer_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
+    _transfer_cmplt_param.get = true;
+    _transfer_cmplt_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
 
-    return spi_transfer(&_transfer_cmd);
+    return spi_transfer(&_transfer_data);
 }
 
 /**
@@ -132,16 +130,16 @@ bool io_get_joystick(io_get_joystick_cmplt_t cmplt_cbk) {
         return false;
     }
     _transfer_active = true;
-    _tx_data[0] = io_cmd_get_joystick;
+    _cmd = io_cmd_get_joystick;
 
     _transfer_data.tx_data = NULL;
     _transfer_data.rx_data = _rx_data;
     _transfer_data.length = sizeof(io_joystick_t);
 
-    _transfer_param.get = true;
-    _transfer_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
+    _transfer_cmplt_param.get = true;
+    _transfer_cmplt_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
 
-    return spi_transfer(&_transfer_cmd);
+    return spi_transfer(&_transfer_data);
 }
 
 /**
@@ -155,16 +153,16 @@ bool io_get_buttons(io_get_buttons_cmplt_t cmplt_cbk) {
         return false;
     }
     _transfer_active = true;
-    _tx_data[0] = io_cmd_get_buttons;
+    _cmd = io_cmd_get_buttons;
 
     _transfer_data.tx_data = NULL;
     _transfer_data.rx_data = _rx_data;
     _transfer_data.length = sizeof(io_buttons_t);
 
-    _transfer_param.get = true;
-    _transfer_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
+    _transfer_cmplt_param.get = true;
+    _transfer_cmplt_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
 
-    return spi_transfer(&_transfer_cmd);
+    return spi_transfer(&_transfer_data);
 }
 
 /**
@@ -178,16 +176,16 @@ bool io_get_info(io_get_info_cmplt_t cmplt_cbk) {
         return false;
     }
     _transfer_active = true;
-    _tx_data[0] = io_cmd_get_info;
+    _cmd = io_cmd_get_info;
 
     _transfer_data.tx_data = NULL;
     _transfer_data.rx_data = _rx_data;
     _transfer_data.length = sizeof(io_info_t);
 
-    _transfer_param.get = true;
-    _transfer_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
+    _transfer_cmplt_param.get = true;
+    _transfer_cmplt_param.get_cmplt_cbk = (void (*)(volatile void *))cmplt_cbk;
 
-    return spi_transfer(&_transfer_cmd);
+    return spi_transfer(&_transfer_data);
 }
 
 /**
@@ -202,16 +200,16 @@ bool io_set_led_on_off(io_led_on_off_t *led_state, io_set_cmplt_t cmplt_cbk) {
         return false;
     }
     _transfer_active = true;
-    _tx_data[0] = io_cmd_set_led_on_off;
+    _cmd = io_cmd_set_led_on_off;
 
     _transfer_data.tx_data = (uint8_t *)led_state;
     _transfer_data.rx_data = NULL;
     _transfer_data.length = sizeof(io_led_on_off_t);
 
-    _transfer_param.get = false;
-    _transfer_param.set_cmplt_cbk = (void (*)(void))cmplt_cbk;
+    _transfer_cmplt_param.get = false;
+    _transfer_cmplt_param.set_cmplt_cbk = (void (*)(void))cmplt_cbk;
 
-    return spi_transfer(&_transfer_cmd);
+    return spi_transfer(&_transfer_data);
 }
 
 /**
@@ -226,14 +224,14 @@ bool io_set_led_pwm(io_led_pwm_t *led_state, io_set_cmplt_t cmplt_cbk) {
         return false;
     }
     _transfer_active = true;
-    _tx_data[0] = io_cmd_set_led_pwm;
+    _cmd = io_cmd_set_led_pwm;
 
     _transfer_data.tx_data = (uint8_t *)led_state;
     _transfer_data.rx_data = NULL;
     _transfer_data.length = sizeof(io_led_pwm_t);
 
-    _transfer_param.get = false;
-    _transfer_param.set_cmplt_cbk = (void (*)(void))cmplt_cbk;
+    _transfer_cmplt_param.get = false;
+    _transfer_cmplt_param.set_cmplt_cbk = (void (*)(void))cmplt_cbk;
 
-    return spi_transfer(&_transfer_cmd);
+    return spi_transfer(&_transfer_data);
 }

@@ -112,7 +112,7 @@ void oled_write_to_display(uint8_t* tx_data, uint8_t length,
     _transfer.tx_data = tx_data;
     _transfer.slave_idx = spi_slave_disp_d;
     _transfer.transfer_cmplt_cbk = transfer_cmplt_cbk;
-    _transfer.param = param;
+    _transfer.cmplt_param = param;
     _transfer.length = length;
     spi_transfer(&_transfer);
     return;

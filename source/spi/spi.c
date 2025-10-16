@@ -110,6 +110,9 @@ void _spi_next_transfer(void) {
     _data_idx = 0;
     _transfer = spi_queue_pop(&_spi_queue);
     _spi_slave_select(_transfer.slave_idx);
+    if (_transfer.transfer_start_cbk) {
+        _transfer.transfer_start_cbk();
+    }
     _spi_rxtx();
 }
 
@@ -142,6 +145,13 @@ bool spi_transfer(const spi_transfer_t* transfer) {
     return false;
 }
 
+void spi_ll_transmit_blocking(uint8_t data) {
+    SPCR &= ~(1 << SPIE);  // Disable interrupt
+    SPDR = data;
+    while (!(SPSR & (1 << SPIF)));
+    SPCR |= (1 << SPIE);  // Enable interrupt
+}
+
 ISR(SPI_STC_vect) {
     if (_transfer.rx_data) {
         _transfer.rx_data[_data_idx] = SPDR;
@@ -153,7 +163,7 @@ ISR(SPI_STC_vect) {
         _spi_slave_deselect(_transfer.slave_idx);
         _transfer_active = false;
         if (_transfer.transfer_cmplt_cbk) {
-            _transfer.transfer_cmplt_cbk(_transfer.param);
+            _transfer.transfer_cmplt_cbk(_transfer.cmplt_param);
         }
         _spi_next_transfer();
     }
