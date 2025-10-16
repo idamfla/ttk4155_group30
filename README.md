@@ -1,6 +1,8 @@
 # TTK4155 Group 30
 For our group to save our lab-work
 
+Doxygen dokumentation: https://idamfla.github.io/ttk4155_group30/
+
 ## Using minicom to open a serial connection
 The ATmega162 is currently configured to transmit printf messages using `USART0` with a baudrate of 38.4 kBaud, 8 data bits, 1 stop bit and no parity.
 
