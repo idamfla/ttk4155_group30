@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 
+#include "../io_board/io_board.h"
 #include "elements/ui_menu_static.h"
 #include "ui_constants.h"
 
@@ -29,8 +30,8 @@ static ui_event_status_t sub_menu_on_event(ui_menu_static_t* const me, const ui_
 
 static void main_menu_init(void) {
     static const char* menu_items[] = {
-        "Item 1", "Item 2", "Item 3", "Submenu", "Item 5",
-        "Item 6", "Item 7", "Item 8", "Item 9",  "Item 10",
+        "LED 1: on", "LED 1: off", "Item 3", "Submenu", "Item 5",
+        "Item 6",    "Item 7",     "Item 8", "Item 9",  "Item 10",
     };
     ui_menu_static_ctor(&_main_menu, main_menu_on_event, menu_items,
                         sizeof(menu_items) / sizeof(menu_items[0]));
@@ -49,8 +50,19 @@ static ui_event_status_t main_menu_on_event(ui_menu_static_t* const me, const ui
         // Intentionally fall through
         case ui_event_button_right:
         case ui_event_button_select:
-            if (me->current_item == 3U) {
-                ui_element_push(&ui, (ui_element_t*)&_sub_menu);
+            switch (me->current_item) {
+                case 0U:
+                    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 1}, NULL);
+                    break;
+                case 1U:
+                    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
+                    break;
+                case 3U:
+                    ui_element_push(&ui, (ui_element_t*)&_sub_menu);
+                    break;
+
+                default:
+                    break;
             }
             status = ui_event_status_handled;
             break;
