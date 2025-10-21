@@ -7,8 +7,12 @@
 
 #include "spi_queue.h"
 
-bool spi_queue_push(spi_queue_t *queue, const spi_transfer_t *transfer) {
+#include <avr/interrupt.h>
+
+bool spi_queue_push(spi_queue_t* queue, const spi_transfer_t* transfer) {
+    cli();
     if (queue->size >= queue->max_size) {
+        sei();
         return false;
     }
     ++queue->size;
@@ -19,10 +23,11 @@ bool spi_queue_push(spi_queue_t *queue, const spi_transfer_t *transfer) {
     } else {
         queue->back = queue->buffer + queue->max_size - 1;
     }
+    sei();
     return true;
 }
 
-spi_transfer_t spi_queue_pop(spi_queue_t *queue) {
+spi_transfer_t spi_queue_pop(spi_queue_t* queue) {
     spi_transfer_t front = *(queue->front);
     if (queue->front > queue->buffer) {
         --queue->front;

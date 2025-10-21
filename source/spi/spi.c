@@ -103,10 +103,12 @@ static void _spi_slave_deselect(uint8_t slave_idx) {
 }
 
 void _spi_next_transfer(void) {
+    cli();
     if (_transfer_active || _spi_queue.size == 0) {
         return;
     }
     _transfer_active = true;
+    sei();
     _data_idx = 0;
     _transfer = spi_queue_pop(&_spi_queue);
     _spi_slave_select(_transfer.slave_idx);
