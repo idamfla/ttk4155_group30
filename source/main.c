@@ -65,6 +65,9 @@ int main(void) {
 
     oled_init();
     ui_init();
+
+    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
+
     timer1_init(UPDATE_RATE);
 
     while (1) {

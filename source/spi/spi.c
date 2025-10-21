@@ -149,6 +149,9 @@ void spi_ll_transmit_blocking(uint8_t data) {
     SPCR &= ~(1 << SPIE);  // Disable interrupt
     SPDR = data;
     while (!(SPSR & (1 << SPIF)));
+    // Clear SPIF by reading SPSR (already read in while loop) and (!) SPDR
+    // See manual page 164 (Bit 7 – SPIF: SPI Interrupt Flag)
+    (void)SPDR;
     SPCR |= (1 << SPIE);  // Enable interrupt
 }
 
