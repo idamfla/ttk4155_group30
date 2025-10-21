@@ -148,6 +148,7 @@ void spi_master_init(void) {
     /* Set slave pins as output, and set them high (SS\bar) */
     SET_PIN(PORT_IO_SS, PIN_IO_SS);
     SET_PIN(PORT_OLED_SS, PIN_OLED_SS);
+    SET_PIN(PORT_CAN_SS, PIN_CAN_SS);
 }
 
 bool spi_transfer(const spi_transfer_t* transfer) {
