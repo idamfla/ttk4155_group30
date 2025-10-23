@@ -24,11 +24,21 @@
 uint8_t test_data[] = {5};
 uint8_t test_data2[] = {10};
 
-const spi_transfer_t test = {.tx_data = test_data,
-                             .rx_data = NULL,
-                             .length = sizeof(test_data),
-                             .slave_idx = spi_slave_disp_d,
-                             .transfer_cmplt_cbk = NULL};
+static volatile bool _transmit_done = true;
+
+void _spi_transfer_cmplt(void* param) {
+    (void)param;  // unused
+    _transmit_done = true;
+}
+
+const spi_transfer_t test = {
+    .tx_data = test_data,
+    .rx_data = NULL,
+    .length = sizeof(test_data),
+    .slave_idx = spi_slave_can,
+    .transfer_cmplt_cbk = _spi_transfer_cmplt,
+    .transfer_start_cbk = NULL,
+};
 
 void on_touch_pad_data(io_touch_pad_t* touch_pad) {
     printf("Touch Pad - X: %d, Y: %d, Signal Strength: %d\r\n", touch_pad->x, touch_pad->y,
