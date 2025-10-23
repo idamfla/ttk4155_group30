@@ -10,11 +10,12 @@
 
 typedef struct
 {
-    uint8_t id;
-    uint8_t address;
+    uint16_t id;
     uint8_t data;
     uint8_t length;
 } CAN_DATA;
 
+
+void CAN_init();
 void CAN_send(CAN_DATA *can_data);
-CAN_DATA CAN_recieve_msg(uint8_t *rx_data, uint8_t address);
+uint8_t CAN_recieve_msg(uint8_t *rx_data, uint8_t address);

@@ -93,7 +93,7 @@ int main(void) {
             mcp2515_request_to_send(0x81);
             cool_value = false;
         }
-        _delay_ms(500);
+        // _delay_ms(500);
     }
     return 0;
 }

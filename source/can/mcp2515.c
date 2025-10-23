@@ -30,7 +30,6 @@
 #define PIN_CAN_RST  PIN2
 
 #define BUFFER_SIZE 8U
-#define DUMMY       ((uint8_t)42)
 
 static volatile bool transmit_done = true;
 static uint8_t _transmit_buffer[BUFFER_SIZE];
