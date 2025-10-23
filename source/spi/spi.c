@@ -113,12 +113,10 @@ static void _spi_slave_deselect(uint8_t slave_idx) {
 }
 
 void _spi_next_transfer(void) {
-    cli();
     if (_transfer_active || _spi_queue.size == 0) {
         return;
     }
     _transfer_active = true;
-    sei();
     _data_idx = 0;
     _transfer = spi_queue_pop(&_spi_queue);
     _spi_slave_select(_transfer.slave_idx);
@@ -152,10 +150,13 @@ void spi_master_init(void) {
 }
 
 bool spi_transfer(const spi_transfer_t* transfer) {
+    cli();
     if (spi_queue_push(&_spi_queue, transfer)) {
         _spi_next_transfer();
+        sei();
         return true;
     }
+    sei();
     return false;
 }
 
@@ -170,6 +171,7 @@ void spi_ll_transmit_blocking(uint8_t data) {
 }
 
 ISR(SPI_STC_vect) {
+    cli();
     if (_transfer.rx_data) {
         _transfer.rx_data[_data_idx] = SPDR;
     }
@@ -184,4 +186,5 @@ ISR(SPI_STC_vect) {
         }
         _spi_next_transfer();
     }
+    sei();
 }
