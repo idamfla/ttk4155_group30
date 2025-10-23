@@ -1,0 +1,19 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "node_1"
+        },
+        {
+            "path": "node_2"
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "*.c": "c",
+            "*.h": "c"
+        }
+    }
+}
