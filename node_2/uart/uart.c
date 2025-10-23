@@ -1,8 +1,6 @@
 #include "sam.h"
 #include <stdio.h>
 
-#define F_CPU 84*1000*1000
-
 typedef struct RingBuf RingBuf;
 struct RingBuf {
     uint8_t buffer[1024];
@@ -15,7 +13,7 @@ struct RingBuf {
 RingBuf ringBuf = {0};
 
 
-int push(RingBuf* rb, uint8_t val){
+static int push(RingBuf* rb, uint8_t val){
     if(rb->length >= (sizeof(rb->buffer)/sizeof(rb->buffer[0]))){
         return 0;
     }
@@ -25,7 +23,7 @@ int push(RingBuf* rb, uint8_t val){
     return 1;
 }
 
-int pop(RingBuf* rb, uint8_t* val){    
+static int pop(RingBuf* rb, uint8_t* val){    
     if(!rb->length){
         return 0;
     }
