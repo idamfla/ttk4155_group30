@@ -49,7 +49,7 @@ clean:
 
 .PHONY: debug
 debug: $(ELF)
-	if pgr openocd; then killall -s 9 openocd; fi
+	if pgrep openocd; then killall -s 9 openocd; fi
 	x-terminal-emulator -e openocd -f sam/openocd.cfg -c "program $(ELF) verify"
 	sleep 5
 	arm-eabi-gdb -tui -iex "target extended-remote localhost:3333" $(ELF)
@@ -58,9 +58,8 @@ debug: $(ELF)
 .PHONY: flash
 flash: $(ELF)
 	#./sam/write_bin.sh sam/openocd.cfg $(BUILD_DIR)/main.elf
-	if pgr openocd; then killall -s 9 openocd; fi
-	openocd -f sam/openocd.cfg -c "program ${BUILD_DIR}/main.elf verify reset exit"
-
+	if pgrep openocd; then killall -s 9 openocd; fi
+	sudo openocd -f sam/openocd.cfg -c "program ${BUILD_DIR}/main.elf verify reset exit"
 
 # pull in dependencies
 -include	$(OBJS:.o=.d)
