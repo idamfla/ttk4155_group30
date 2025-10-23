@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <util/delay.h>
 
+#include "can/mcp2515.h"
 #include "io_board/io_board.h"
 #include "max156/max156.h"
 #include "oled/oled.h"
@@ -63,18 +64,26 @@ int main(void) {
 
     spi_master_init();
 
+    mcp2515_init();
+
     oled_init();
     ui_init();
 
     io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
     timer1_init(UPDATE_RATE);
-
+    bool cool_value = true;
     while (1) {
         // ui_event_push(&ui, ui_event_draw);
         // io_get_touch_pad(on_touch_pad_data);
         ui_dispatch(&ui);
-        // _delay_ms(500);
+        if (cool_value) {
+            mcp2515_write(6, 0x40, 1);
+            _delay_us(10);
+            mcp2515_request_to_send(0x81);
+            cool_value = false;
+        }
+        _delay_ms(500);
     }
     return 0;
 }

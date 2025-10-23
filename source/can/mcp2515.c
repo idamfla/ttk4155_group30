@@ -19,6 +19,8 @@
 
 #define SPI_TRANSMIT(tranfer) (transmit_done = false, spi_transfer(&tranfer))
 
+#define MCP_TXREQ 0x08
+
 #define DDR_CAN_INTERRUPT  DDRB   // TODO find place
 #define PORT_CAN_INTERRUPT PORTB  // TODO find place
 #define PIN_CAN_INTERRUPT  PIN0   // TODO find place
@@ -30,7 +32,7 @@
 #define BUFFER_SIZE 8U
 #define DUMMY       ((uint8_t)42)
 
-static volatile bool transmit_done = false;
+static volatile bool transmit_done = true;
 static uint8_t _transmit_buffer[BUFFER_SIZE];
 static void _spi_transfer_cmplt(void* param);
 
@@ -69,7 +71,7 @@ bool mcp2515_write(uint8_t tx_data, uint8_t address, uint8_t length) {
 
     _transmit_buffer[0] = MCP_WRITE;
     _transmit_buffer[1] = address;
-    _transmit_buffer[2] = tx_data; // DB maybe change to ptr at a later time
+    _transmit_buffer[2] = tx_data;  // DB maybe change to ptr at a later time
     _transfer.length = length + 2;
     _transfer.tx_data = _transmit_buffer;
     return SPI_TRANSMIT(_transfer);
@@ -108,4 +110,17 @@ void mcp2515_reset(void) {
     _delay_us(10);
     SET_PIN(PORT_CAN_RST, PIN_CAN_RST);
     _delay_us(10);
+}
+
+/**
+ * @brief Request to send
+ * @param address Which RST_TXc we want to use
+ */
+bool mcp2515_request_to_send(uint8_t address) {
+    if (!transmit_done) return false;
+
+    _transfer.length = 1;
+    _transmit_buffer[0] = address;
+    _transfer.tx_data = _transmit_buffer;
+    return SPI_TRANSMIT(_transfer);
 }
