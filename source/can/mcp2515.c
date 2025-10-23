@@ -36,11 +36,14 @@ static volatile bool transmit_done = true;
 static uint8_t _transmit_buffer[BUFFER_SIZE];
 static void _spi_transfer_cmplt(void* param);
 
-static spi_transfer_t _transfer = {.rx_data = NULL,
-                                   .tx_data = _transmit_buffer,
-                                   .length = 0,
-                                   .slave_idx = spi_slave_can,
-                                   .transfer_cmplt_cbk = _spi_transfer_cmplt};
+static spi_transfer_t _transfer = {
+    .rx_data = NULL,
+    .tx_data = _transmit_buffer,
+    .length = 0,
+    .slave_idx = spi_slave_can,
+    .transfer_cmplt_cbk = _spi_transfer_cmplt,
+    .transfer_start_cbk = NULL,
+};
 
 static void _spi_transfer_cmplt(void* param) {
     (void)param;  // unused
