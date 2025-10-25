@@ -68,12 +68,14 @@ bool mcp2515_bit_modify(uint8_t port, uint8_t bit_mask, uint8_t data) {
     return SPI_TRANSMIT(_transfer);
 }
 
-bool mcp2515_write(uint8_t tx_data, uint8_t address, uint8_t length) {
+bool mcp2515_write(uint8_t* tx_data, uint8_t address, uint8_t length) {
     if (!transmit_done || !tx_data) return false;
 
     _transmit_buffer[0] = MCP_WRITE;
     _transmit_buffer[1] = address;
-    _transmit_buffer[2] = tx_data;  // DB maybe change to ptr at a later time
+    for (uint8_t i = 0; i < length; i++) {
+        _transmit_buffer[i] = tx_data[i];  // DB maybe change to ptr at a later time
+    }
     _transfer.length = length + 2;
     _transfer.tx_data = _transmit_buffer;
     return SPI_TRANSMIT(_transfer);
