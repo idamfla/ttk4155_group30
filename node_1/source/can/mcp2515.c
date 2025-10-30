@@ -75,7 +75,7 @@ bool mcp2515_transmit_done() {
 bool mcp2515_write(uint8_t* tx_data, uint8_t address, uint8_t length) {
     if (!transmit_done || !tx_data) return false;
 
-    _transmit_buffer[0] = MCP_WRITE;
+    _transmit_buffer[0] = MCP_WRITE;  //maybe not work
     _transmit_buffer[1] = address;
     for (uint8_t i = 0; i < length; i++) {
         _transmit_buffer[2 + i] = tx_data[i];

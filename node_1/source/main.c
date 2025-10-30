@@ -21,9 +21,9 @@
 #define UBRR0       (F_CPU / 16 / BAUD - 1)
 #define UPDATE_RATE 20U  // Hz
 #include "timer/timer.h"
-uint8_t arr[3] = {0x01, 0x02, 0x03};
+uint8_t arr[1] = {0x01};
 uint8_t test_data[] = {5};
-CAN_DATA test_data2 = {.id = 0x10, .data = arr, .length = 3};
+CAN_DATA test_data2 = {.id = 0x10, .data = arr, .length = 1};
 
 static volatile bool _transmit_done = true;
 
@@ -77,22 +77,21 @@ int main(void) {
 
     mcp2515_init();
 
-    oled_init();
-    ui_init();
+    // oled_init();
+    // ui_init();
 
     CAN_init();
-    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
+    // io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
-    uint8_t* msg;
+    uint8_t msg[10];
 
     timer1_init(UPDATE_RATE);
     while (1) {
         // ui_event_push(&ui, ui_event_draw);
         // io_get_touch_pad(on_touch_pad_data);
-        ui_dispatch(&ui);
+        // ui_dispatch(&ui);
         // mcp2515_bit_modify(0x0F, 0xe0, 0x80);
         CAN_send(&test_data2);
-        // mcp2515_request_to_send(0x36);
         //  _delay_ms(500);
         CAN_recieve_msg(msg, 0x90);
     }
@@ -101,6 +100,6 @@ int main(void) {
 
 // Executed at UPDATE_RATE Hz
 ISR(TIMER1_COMPA_vect) {
-    io_get_buttons(on_button_data);
-    ui_event_push(&ui, ui_event_draw);
+    // io_get_buttons(on_button_data);
+    // ui_event_push(&ui, ui_event_draw);
 }

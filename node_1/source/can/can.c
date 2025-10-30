@@ -12,6 +12,8 @@
 #include <util/delay.h>
 // clang-format on
 
+#include <avr/interrupt.h>
+#include <stdio.h>
 #include "mcp2515.h"
 #include "mcp2515_const.h"
 
@@ -52,13 +54,14 @@ static uint8_t init_cmds[] = {
     // MCP_RXF1SIDL,  0x00,  // filter idl
     // MCP_BFPCTRL,   0x00,  // disable rxb-pins
     MCP_CNF1,    ((1U << 6) | 1U),                     //
-    MCP_CNF2,    ((1U << 7) | (3U << 3) | (7U << 0)),  //
+    MCP_CNF2,    ((1U << 7) | (4U << 3) | (7U << 0)),  //
     MCP_CNF3,    ((1U << 0)),                          //
     MCP_CANINTE, 0x03,                                 // enable interrupts
     // MCP_CANINTF,   0x00,  // TODO put something here, enable interrupt flags
     // MCP_CANCTRL,   0x40,  // Loopback mode
 };
 
+uint8_t* msg_global;
 static uint8_t tx_data[10];
 
 void CAN_init() {
@@ -87,7 +90,7 @@ bool CAN_send(CAN_DATA* can_data) {
     uint8_t length = 3 + can_data->length;
 
     tx_data[0] = can_data->id;
-    tx_data[1] = DUMMY;
+    // tx_data[1] = DUMMY;
     tx_data[2] = can_data->length;
 
     for (uint8_t i = 0; i < can_data->length; i++) {
@@ -103,4 +106,17 @@ bool CAN_send(CAN_DATA* can_data) {
 bool CAN_recieve_msg(uint8_t* rx_data, uint8_t address) {
     if (!mcp2515_transmit_done()) return false;
     return mcp2515_read(rx_data, address);
+}
+
+ISR(INT0_vect){
+    uint8_t can_int_reg[8];
+    mcp2515_read(can_int_reg, MCP_CANINTF);
+    for (uint8_t bit = 8; bit >= 1; bit--){
+        printf("%d", ((*can_int_reg >> (bit - 1)) & 1));
+    } printf("\r\n");
+
+    if ((*can_int_reg & (1 << MCP_RX0IF)) != 0){
+        CAN_recieve_msg(msg_global, 1);
+        mcp2515_bit_modify(MCP_CANINTF, (1 << MCP_RX0IF), 0);
+    }
 }
