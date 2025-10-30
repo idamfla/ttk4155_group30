@@ -126,7 +126,7 @@ uint8_t can_send(CAN_MESSAGE* can_msg, uint8_t tx_mb_id) {
     // Check that mailbox is ready
     if (CAN0->CAN_MB[tx_mb_id].CAN_MSR & CAN_MSR_MRDY) {
         // Set message ID and use CAN 2.0B protocol
-        CAN0->CAN_MB[tx_mb_id].CAN_MID = CAN_MID_MIDvA(can_msg->id) | CAN_MID_MIDE;
+        CAN0->CAN_MB[tx_mb_id].CAN_MID = CAN_MID_MIDvA(can_msg->id);  // | CAN_MID_MIDE;
 
         // Make sure message is not to long
         if (can_msg->data_length > 7) {
