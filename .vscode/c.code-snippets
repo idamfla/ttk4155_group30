@@ -31,12 +31,13 @@
             " * @date $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
             " */",
             "",
-            "#ifndef ${TM_FILENAME/([^-\\.])|([-\\.])/${1:/upcase}${2:+_}/g}",
-            "#define ${TM_FILENAME/([^-\\.])|([-\\.])/${1:/upcase}${2:+_}/g}",
+            "#pragma once",
+            "",
+            "// clang-format off",
+            "${3}",
+            "// clang-format on",
             "",
             "${0}",
-            "",
-            "#endif /* ${TM_FILENAME/([^-\\.])|([-\\.])/${1:/upcase}${2:+_}/g} */",
             ""
         ]
     }
