@@ -32,7 +32,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: build/doxygen/html
+          path: node_1/build/doxygen/html
 
   deploy:
     name: Deploy to GitHub Pages
