@@ -8,6 +8,8 @@ MCUTYPE = __SAM3X8E__
 SOURCE_FILES = \
 	$(BOOTUP) \
 	main.c \
+	can/can_controller.c \
+	can/can_interrupt.c \
 	uart/uart.c
 
 # Feel free to ignore anything below this line
