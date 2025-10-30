@@ -68,6 +68,10 @@ bool mcp2515_bit_modify(uint8_t port, uint8_t bit_mask, uint8_t data) {
     return SPI_TRANSMIT(_transfer);
 }
 
+bool mcp2515_transmit_done() {
+    return transmit_done;
+}
+
 bool mcp2515_write(uint8_t* tx_data, uint8_t address, uint8_t length) {
     if (!transmit_done || !tx_data) return false;
 

@@ -28,7 +28,7 @@
 
 // MCP_EFLG,      0x00,  // Maybe use in init
 
-static const uint8_t init_cmds[] = {
+static uint8_t init_cmds[] = {
     // MCP_CANCTRL,   0x80,  // set to config mode
     // MCP_TXB0CTRL,  0x03,  // priority txb0
     // MCP_TXB1CTRL,  0x02,  // priority txb1
@@ -51,38 +51,41 @@ static const uint8_t init_cmds[] = {
     // MCP_RXF1SIDH,  0x08,  // filter idh
     // MCP_RXF1SIDL,  0x00,  // filter idl
     // MCP_BFPCTRL,   0x00,  // disable rxb-pins
-    MCP_CNF1,    0x05,  //
-    MCP_CNF2,    0xb1,  //
-    MCP_CNF3,    0x03,  //
-    MCP_CANINTE, 0x03,  // enable interrupts
+    MCP_CNF1,    ((1U << 6) | 1U),                     //
+    MCP_CNF2,    ((1U << 7) | (3U << 3) | (7U << 0)),  //
+    MCP_CNF3,    ((1U << 0)),                          //
+    MCP_CANINTE, 0x03,                                 // enable interrupts
     // MCP_CANINTF,   0x00,  // TODO put something here, enable interrupt flags
     // MCP_CANCTRL,   0x40,  // Loopback mode
 };
 
+static uint8_t tx_data[10];
+
 void CAN_init() {
-    mcp2515_reset();
-    // set config mode
-    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x80);
-    _delay_us(10);
+    while (!mcp2515_transmit_done());
+    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x80);  // config mode
 
     uint8_t length = sizeof(init_cmds) / sizeof(init_cmds[0]);
-    uint8_t port;
-    uint8_t data;
+    // uint8_t port;
+    // uint8_t data;
     for (uint8_t i = 0; i < length - 1; i += 2) {
-        port = init_cmds[i];
-        data = init_cmds[i + 1];
-        mcp2515_write(&data, port, 1);
-        _delay_us(10);
+        // port = init_cmds[i];
+        // data = init_cmds[i + 1];
+        // mcp2515_write(&data, port, 1);
+        while (!mcp2515_transmit_done());
+        // tx_data[i] = init_cmds[i];
+        // tx_data[i + 1] = init_cmds[i + 1];
+        mcp2515_write(init_cmds + 1 + i, init_cmds[i], 1);
     }
 
-    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x00);
-    _delay_us(10);
+    while (!mcp2515_transmit_done());
+    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x40);  // loopback mode
 }
 
-void CAN_send(CAN_DATA* can_data) {
+bool CAN_send(CAN_DATA* can_data) {
+    if (!mcp2515_transmit_done()) return false;
     uint8_t length = 3 + can_data->length;
 
-    uint8_t tx_data[4];
     tx_data[0] = can_data->id;
     tx_data[1] = DUMMY;
     tx_data[2] = can_data->length;
@@ -92,9 +95,12 @@ void CAN_send(CAN_DATA* can_data) {
     }
 
     mcp2515_write(tx_data, MCP_TXB0EID8, length);
-    mcp2515_request_to_send(MCP_TXB0EID8);
+    while (!mcp2515_transmit_done());
+    mcp2515_request_to_send(MCP_RTS_TX0);
+    return true;
 }
 
 bool CAN_recieve_msg(uint8_t* rx_data, uint8_t address) {
+    if (!mcp2515_transmit_done()) return false;
     return mcp2515_read(rx_data, address);
 }
