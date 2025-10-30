@@ -1,0 +1,12 @@
+{
+    "editor.formatOnSave": true,
+    "[c]": {
+        "editor.rulers": [
+            100
+        ]
+    },
+    "files.associations": {
+        "*.c": "c",
+        "*.h": "c"
+    }
+}

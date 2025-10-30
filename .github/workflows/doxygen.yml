@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Doxygen
+    name: Build Doxygen for node 1
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,7 +25,9 @@ jobs:
           sudo apt-get install -y doxygen make graphviz
 
       - name: Build Doxygen documentation
-        run: make docs
+        run: |
+          cd node_1
+          make docs
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4

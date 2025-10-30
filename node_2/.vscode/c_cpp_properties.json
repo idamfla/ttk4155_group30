@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/sam",
+                "${workspaceFolder}/sam/sam3x/include",
+                "${workspaceFolder}/sam/sam3x/source",
+                "${workspaceFolder}/sam/cmsis"
+            ],
+            "defines": [
+                "__SAM3X8E__"
+            ],
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}

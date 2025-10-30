@@ -18,12 +18,17 @@ RUN apt-get update && apt-get install -y \
     libusb-1.0-0-dev \
     make \
     openocd \
+    sudo \
+    usbutils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Create symlinks for nm and objdump because the ARM toolchain does not provide them
 RUN ln -s /usr/bin/nm /usr/bin/nm-multiarch \
     && ln -s /usr/bin/objdump /usr/bin/objdump-multiarch
+
+RUN usermod -aG sudo ubuntu \
+    && echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Change to the unprivileged user
 USER ubuntu
