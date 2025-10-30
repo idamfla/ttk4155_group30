@@ -74,7 +74,7 @@ bool mcp2515_write(uint8_t* tx_data, uint8_t address, uint8_t length) {
     _transmit_buffer[0] = MCP_WRITE;
     _transmit_buffer[1] = address;
     for (uint8_t i = 0; i < length; i++) {
-        _transmit_buffer[i] = tx_data[i];  // DB maybe change to ptr at a later time
+        _transmit_buffer[2 + i] = tx_data[i];
     }
     _transfer.length = length + 2;
     _transfer.tx_data = _transmit_buffer;
@@ -108,11 +108,12 @@ bool mcp2515_read_status(uint8_t* rx_data) {
     return SPI_TRANSMIT(_transfer);
 }
 
-/** @brief Resets the OLED display */
+/** @brief Sends reset instruction*/
 void mcp2515_reset(void) {
-    CLEAR_PIN(PORT_CAN_RST, PIN_CAN_RST);
-    _delay_us(10);
-    SET_PIN(PORT_CAN_RST, PIN_CAN_RST);
+    _transmit_buffer[0] = MCP_RESET;
+    _transfer.length = 1;
+    _transfer.tx_data = _transmit_buffer;
+    SPI_TRANSMIT(_transfer);
     _delay_us(10);
 }
 

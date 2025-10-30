@@ -11,7 +11,7 @@
 
 typedef struct {
     uint16_t id;
-    uint8_t data;
+    uint8_t *data;
     uint8_t length;
 } CAN_DATA;
 

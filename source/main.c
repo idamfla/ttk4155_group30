@@ -23,7 +23,11 @@
 #include "timer/timer.h"
 
 uint8_t test_data[] = {5};
-uint8_t test_data2[] = {10};
+CAN_DATA test_data2 = {
+    .id = 0x10,
+    .data = (uint8_t*)0x52,
+    .length = 1
+};
 
 static volatile bool _transmit_done = true;
 
@@ -76,20 +80,19 @@ int main(void) {
     spi_master_init();
 
     mcp2515_init();
-
+    
     oled_init();
     ui_init();
+    
     CAN_init();
-
     io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
     timer1_init(UPDATE_RATE);
-    bool cool_value = true;
     while (1) {
         // ui_event_push(&ui, ui_event_draw);
         // io_get_touch_pad(on_touch_pad_data);
         ui_dispatch(&ui);
-        CAN_send(test_data2);
+        CAN_send(&test_data2);
         // _delay_ms(500);
     }
     return 0;
