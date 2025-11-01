@@ -72,10 +72,10 @@ bool mcp2515_transmit_done() {
     return transmit_done;
 }
 
-bool mcp2515_write(uint8_t* tx_data, uint8_t address, uint8_t length) {
+bool mcp2515_write(volatile uint8_t* tx_data, uint8_t address, uint8_t length) {
     if (!transmit_done || !tx_data) return false;
 
-    _transmit_buffer[0] = MCP_WRITE;  //maybe not work
+    _transmit_buffer[0] = MCP_WRITE;
     _transmit_buffer[1] = address;
     for (uint8_t i = 0; i < length; i++) {
         _transmit_buffer[2 + i] = tx_data[i];
@@ -89,7 +89,7 @@ bool mcp2515_write(uint8_t* tx_data, uint8_t address, uint8_t length) {
  * @brief does some reading i think
  * @param address i think this is the address we want to read from
  */
-bool mcp2515_read(uint8_t* rx_data, uint8_t address) {
+bool mcp2515_read(volatile uint8_t* rx_data, uint8_t address) {
     if (!transmit_done) return false;
 
     _transmit_buffer[0] = MCP_READ;

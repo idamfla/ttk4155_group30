@@ -23,7 +23,7 @@
 #include "timer/timer.h"
 uint8_t arr[1] = {0x01};
 uint8_t test_data[] = {5};
-CAN_DATA test_data2 = {.id = 0x10, .data = arr, .length = 1};
+CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
 
 static volatile bool _transmit_done = true;
 
@@ -68,6 +68,10 @@ void on_button_data(io_buttons_t* buttons) {
     prev_buttons = *buttons;
 }
 
+static void can_rx_cmplt(CAN_DATA* can_data) {
+    (void)can_data;
+}
+
 int main(void) {
     printf_init(USART0, UBRR0);
     xmem_init();
@@ -80,7 +84,7 @@ int main(void) {
     // oled_init();
     // ui_init();
 
-    CAN_init();
+    CAN_init(can_rx_cmplt);
     // io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
     uint8_t msg[10];

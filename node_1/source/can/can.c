@@ -14,10 +14,11 @@
 
 #include <avr/interrupt.h>
 #include <stdio.h>
+
 #include "mcp2515.h"
 #include "mcp2515_const.h"
 
-#define MCP_TXB0EID8 0x33
+// #define MCP_TXB0EID8 0x33
 
 #define MCP_TXRTSCTRL 0x0d
 #define MCP_BFPCTRL   0x0c
@@ -27,6 +28,9 @@
 #define MCP_TXB0SIDH  0x31
 #define MCP_TXB1SIDH  0x41
 #define MCP_TXB2SIDH  0x51
+
+#define EXT_ID_HIGH_VAL DUMMY
+#define EXT_ID_LOW_VAL  DUMMY
 
 // MCP_EFLG,      0x00,  // Maybe use in init
 
@@ -61,10 +65,13 @@ static uint8_t init_cmds[] = {
     // MCP_CANCTRL,   0x40,  // Loopback mode
 };
 
-uint8_t* msg_global;
-static uint8_t tx_data[10];
+static volatile uint8_t msg_global[10];
+static volatile uint8_t tx_data[10];
 
-void CAN_init() {
+static void (*_can_rx_cmplt)(CAN_DATA* can_data);
+
+void CAN_init(void (*can_rx_cmplt)(CAN_DATA* can_data)) {
+    _can_rx_cmplt = can_rx_cmplt;
     while (!mcp2515_transmit_done());
     mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x80);  // config mode
 
@@ -87,36 +94,43 @@ void CAN_init() {
 
 bool CAN_send(CAN_DATA* can_data) {
     if (!mcp2515_transmit_done()) return false;
-    uint8_t length = 3 + can_data->length;
+    uint8_t length = 5 + can_data->length;
 
-    tx_data[0] = can_data->id;
-    // tx_data[1] = DUMMY;
-    tx_data[2] = can_data->length;
+    tx_data[0] = (uint8_t)((can_data->id >> 3) & 0xFF);
+    tx_data[1] = (uint8_t)((can_data->id << 5) & 0xFF);
+    tx_data[2] = EXT_ID_HIGH_VAL;
+    tx_data[3] = EXT_ID_LOW_VAL;
+    tx_data[4] = can_data->length;
 
     for (uint8_t i = 0; i < can_data->length; i++) {
-        tx_data[3 + i] = can_data->data[i];
+        tx_data[5 + i] = can_data->data[i];
     }
 
-    mcp2515_write(tx_data, MCP_TXB0EID8, length);
+    mcp2515_write(tx_data, MCP_TXB0SIDH, length);
     while (!mcp2515_transmit_done());
     mcp2515_request_to_send(MCP_RTS_TX0);
     return true;
 }
 
-bool CAN_recieve_msg(uint8_t* rx_data, uint8_t address) {
+bool CAN_recieve_msg(volatile uint8_t* rx_data, uint8_t address) {
     if (!mcp2515_transmit_done()) return false;
     return mcp2515_read(rx_data, address);
 }
 
-ISR(INT0_vect){
-    uint8_t can_int_reg[8];
-    mcp2515_read(can_int_reg, MCP_CANINTF);
-    for (uint8_t bit = 8; bit >= 1; bit--){
-        printf("%d", ((*can_int_reg >> (bit - 1)) & 1));
-    } printf("\r\n");
-
-    if ((*can_int_reg & (1 << MCP_RX0IF)) != 0){
-        CAN_recieve_msg(msg_global, 1);
-        mcp2515_bit_modify(MCP_CANINTF, (1 << MCP_RX0IF), 0);
+ISR(INT0_vect) {
+    mcp2515_read(msg_global, MCP_CANINTF);
+    while (!mcp2515_transmit_done());
+    for (uint8_t bit = 8; bit >= 1; bit--) {
+        printf("%d", ((*msg_global >> (bit - 1)) & 1));
     }
+    printf("\r\n");
+
+    if ((*msg_global & (1 << MCP_RX0IF)) != 0) {
+        CAN_recieve_msg(msg_global, 1);
+        while (!mcp2515_transmit_done());
+        mcp2515_bit_modify(MCP_CANINTF, (1 << MCP_RX0IF), 0);
+        while (!mcp2515_transmit_done());
+    }
+    // CAN_DATA data = {.id = };
+    // _can_rx_cmplt();
 }
