@@ -65,7 +65,7 @@ static uint8_t init_cmds[] = {
     // MCP_CANCTRL,   0x40,  // Loopback mode
 };
 
-static volatile uint8_t msg_global[10];
+static volatile uint8_t rx_data[10];
 static volatile uint8_t tx_data[10];
 
 static void (*_can_rx_cmplt)(CAN_DATA* can_data);
@@ -89,7 +89,7 @@ void CAN_init(void (*can_rx_cmplt)(CAN_DATA* can_data)) {
     }
 
     while (!mcp2515_transmit_done());
-    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x40);  // loopback mode
+    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x00);  // loopback mode 0x40, normal 0x00
 }
 
 bool CAN_send(CAN_DATA* can_data) {
@@ -114,23 +114,33 @@ bool CAN_send(CAN_DATA* can_data) {
 
 bool CAN_recieve_msg(volatile uint8_t* rx_data, uint8_t address) {
     if (!mcp2515_transmit_done()) return false;
-    return mcp2515_read(rx_data, address);
+    return mcp2515_read(rx_data, address, 3);
 }
 
 ISR(INT0_vect) {
-    mcp2515_read(msg_global, MCP_CANINTF);
-    while (!mcp2515_transmit_done());
-    for (uint8_t bit = 8; bit >= 1; bit--) {
-        printf("%d", ((*msg_global >> (bit - 1)) & 1));
-    }
-    printf("\r\n");
+    // mcp2515_read(rx_data, MCP_CANINTF);
+    // while (!mcp2515_transmit_done());
+    // for (uint8_t bit = 8; bit >= 1; bit--) {
+    //     printf("%d", ((*rx_data >> (bit - 1)) & 1));
+    // }
+    // printf("\r\n");
 
-    if ((*msg_global & (1 << MCP_RX0IF)) != 0) {
-        CAN_recieve_msg(msg_global, 1);
-        while (!mcp2515_transmit_done());
-        mcp2515_bit_modify(MCP_CANINTF, (1 << MCP_RX0IF), 0);
-        while (!mcp2515_transmit_done());
-    }
-    // CAN_DATA data = {.id = };
-    // _can_rx_cmplt();
+    mcp2515_read(rx_data, MCP_TXB0SIDH, 5);
+    while (!mcp2515_transmit_done());
+    uint8_t data_length = rx_data[4] & 0xf;
+    mcp2515_read(rx_data + 5, MCP_READ_RX0, data_length);
+    while (!mcp2515_transmit_done());
+
+    CAN_DATA data = {
+        .id = ((uint16_t)(rx_data[0]) << 3) | ((uint16_t)(rx_data[1] & 0b11100000) >> 5),
+        .length = data_length,
+        .data = rx_data + 5};
+    _can_rx_cmplt(&data);
+
+    // if ((*rx_data & (1 << MCP_RX0IF)) != 0) {
+    //     CAN_recieve_msg(rx_data, MCP_TXB0SIDH);
+    //     while (!mcp2515_transmit_done());
+    //     mcp2515_bit_modify(MCP_CANINTF, (1 << MCP_RX0IF), 0);
+    //     while (!mcp2515_transmit_done());
+    // }
 }

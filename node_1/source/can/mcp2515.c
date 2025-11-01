@@ -89,13 +89,15 @@ bool mcp2515_write(volatile uint8_t* tx_data, uint8_t address, uint8_t length) {
  * @brief does some reading i think
  * @param address i think this is the address we want to read from
  */
-bool mcp2515_read(volatile uint8_t* rx_data, uint8_t address) {
+bool mcp2515_read(volatile uint8_t* rx_data, uint8_t address, uint8_t length) {
     if (!transmit_done) return false;
 
     _transmit_buffer[0] = MCP_READ;
     _transmit_buffer[1] = address;
-    _transmit_buffer[2] = DUMMY;  // Just write dummy byte
-    _transfer.length = 3;
+    for (uint8_t i = 0; i < length; i++) {
+        _transmit_buffer[2 + i] = DUMMY;  // Just write dummy byte
+    }
+    _transfer.length = 2 + length;
     _transfer.tx_data = _transmit_buffer;
     _transfer.rx_data = rx_data;
     return SPI_TRANSMIT(_transfer);
