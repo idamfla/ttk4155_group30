@@ -4,7 +4,7 @@
 #define F_CPU     84U * 1000U * 1000U  // CPU frequency in Hz
 #define UART_BAUD 38400U               // UART baud rate
 
-#define F_CAN          (250U * 1000U)
+#define F_CAN          (125U * 1000U)
 #define CAN_SJW        2U
 #define CAN_PROP_SEG   8U
 #define CAN_PHASE_SEG1 5U

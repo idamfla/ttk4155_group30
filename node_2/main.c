@@ -32,8 +32,17 @@ int main() {
     can_init_def_tx_rx_mb(can_br.value);
 
     can_send(&msg, 0U);
-
     while (1) {
+        // _delay_ms(1000);
         /* code */
     }
 }
+
+/*
+TA
+.sjw = 0,
+.prop_seg = 0,
+.phase_seg1 = 6U,
+.phase_seg2 = 5U,
+.brp = 41U,
+*/
