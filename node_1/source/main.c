@@ -94,14 +94,17 @@ int main(void) {
     uint8_t msg[10];
 
     timer1_init(UPDATE_RATE);
+    printf("Starting main loop\r\n");
     while (1) {
         // ui_event_push(&ui, ui_event_draw);
         // io_get_touch_pad(on_touch_pad_data);
         // ui_dispatch(&ui);
         // mcp2515_bit_modify(0x0F, 0xe0, 0x80);
-        CAN_send(&test_data2);
+        //CAN_send(&test_data2);
         //  _delay_ms(500);
-        // CAN_recieve_msg(msg, 0x28);
+        // CAN_recieve_msg(msg, 0x2b);
+        // CAN_recieve_msg(msg, 0x90);
+        // CAN_recieve_msg(msg, 0x94);
         // while (!mcp2515_transmit_done());
         // printf("Cnf1: %d, cnf2: %d, cnf3: %d \r\n", msg[4], msg[3], msg[2]);
     }

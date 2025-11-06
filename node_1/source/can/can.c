@@ -6,6 +6,7 @@
  */
 
 #include "can.h"
+#include "../gpio/gpio.h"
 
 // clang-format off
 #include "../constants.h"
@@ -57,9 +58,16 @@ static uint8_t init_cmds[] = {
     // MCP_RXF1SIDH,  0x08,  // filter idh
     // MCP_RXF1SIDL,  0x00,  // filter idl
     // MCP_BFPCTRL,   0x00,  // disable rxb-pins
-    MCP_CNF1,    ((1U << 6) | 1U),                     //
-    MCP_CNF2,    ((1U << 7) | (4U << 3) | (7U << 0)),  //
-    MCP_CNF3,    ((1U << 0)),                          //
+    // MCP_CNF1,    (((1U-1U) << 6) | 1U),                     //
+    // MCP_CNF2,    (((1U-1U) << 7) | ((4U-1U) << 3) | ((7U-1U) << 0)),  //
+    // MCP_CNF3,    (((1U-1U) << 0)),       
+    MCP_CNF1, ((1U << 6) | 3U),                     // SJW= 2TQ, BRP=3 → TQ = 2 * (3+1)/16MHz = 0.5 µs
+    MCP_CNF2, ((1U << 7) | (4U << 3) | (7U << 0)),  // BTLMODE=1, PHSEG1=5, PRSEG=8
+    MCP_CNF3, ((1U << 0)),                          // PHSEG2=2
+                     
+    // MCP_CNF1, 3,                    // SJW=1TQ, BRP=1 → TQ = 2 * (1+1)/16MHz = 0.25 µs
+    // MCP_CNF2, 176,  // BTLMODE=1, PHSEG1=4, PRSEG=7
+    // MCP_CNF3, 5,                        // PHSEG2=1
     MCP_CANINTE, 0x03,                                 // enable interrupts
     // MCP_CANINTF,   0x00,  // TODO put something here, enable interrupt flags
     // MCP_CANCTRL,   0x40,  // Loopback mode
@@ -114,21 +122,22 @@ bool CAN_send(CAN_DATA* can_data) {
 
 bool CAN_recieve_msg(volatile uint8_t* rx_data, uint8_t address) {
     if (!mcp2515_transmit_done()) return false;
-    return mcp2515_read(rx_data, address, 3);
+    return mcp2515_read(rx_data, address, 1);
 }
 
-ISR(INT0_vect) {
+ISR(INT1_vect) {
     // mcp2515_read(rx_data, MCP_CANINTF);
     // while (!mcp2515_transmit_done());
     // for (uint8_t bit = 8; bit >= 1; bit--) {
     //     printf("%d", ((*rx_data >> (bit - 1)) & 1));
     // }
     // printf("\r\n");
-
-    mcp2515_read(rx_data, MCP_TXB0SIDH, 5);
+    cli();
+    printf("CAN Interrupt Triggered\r\n");
+    mcp2515_read(rx_data, MCP_TXB1SIDH, 5);
     while (!mcp2515_transmit_done());
     uint8_t data_length = rx_data[4] & 0xf;
-    mcp2515_read(rx_data + 5, MCP_READ_RX0, data_length);
+    mcp2515_read(rx_data + 5, MCP_READ_RX1, data_length);
     while (!mcp2515_transmit_done());
 
     CAN_DATA data = {
@@ -136,6 +145,15 @@ ISR(INT0_vect) {
         .length = data_length,
         .data = rx_data + 5};
     _can_rx_cmplt(&data);
+    
+    // Trun off interrupt flag
+    // mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x80);  // config mode
+    // while (!mcp2515_transmit_done());
+    mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00);
+    while (!mcp2515_transmit_done());
+    // mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x00);  // normal mode
+    // while(!mcp2515_transmit_done());
+    sei();
 
     // if ((*rx_data & (1 << MCP_RX0IF)) != 0) {
     //     CAN_recieve_msg(rx_data, MCP_TXB0SIDH);

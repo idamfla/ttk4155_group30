@@ -13,6 +13,7 @@
 
 #include "../gpio/gpio.h"
 #include "spi_queue.h"
+#include "../can/mcp2515.h"
 
 // #define DDR_SPI DDRB
 // #define DD_MOSI DDB5
@@ -47,7 +48,7 @@
 
 #define DDR_CAN_SS  DDRD
 #define PORT_CAN_SS PORTD
-#define PIN_CAN_SS  PD3
+#define PIN_CAN_SS  PD4
 
 #define QUEUE_SIZE 10
 

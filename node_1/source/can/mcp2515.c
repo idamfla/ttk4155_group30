@@ -11,6 +11,7 @@
 // clang-format on
 
 #include <util/delay.h>
+#include <avr/interrupt.h>
 
 #include "../gpio/gpio.h"
 #include "../oled/oled.h"
@@ -23,17 +24,14 @@
 
 #define DDR_CAN_INTERRUPT  DDRB   // TODO find place
 #define PORT_CAN_INTERRUPT PORTB  // TODO find place
-#define PIN_CAN_INTERRUPT  PIN0   // TODO find place
-
-#define DDR_CAN_RST  DDRD
-#define PORT_CAN_RST PORTD
-#define PIN_CAN_RST  PIN2
+#define PIN_CAN_INTERRUPT  PIN3   // TODO find place
 
 #define BUFFER_SIZE 8U
 
 static volatile bool transmit_done = true;
 static uint8_t _transmit_buffer[BUFFER_SIZE];
 static void _spi_transfer_cmplt(void* param);
+void mcp2515_interrupt_enable();
 
 static spi_transfer_t _transfer = {
     .rx_data = NULL,
@@ -48,6 +46,11 @@ static void _spi_transfer_cmplt(void* param) {
     (void)param;  // unused
     transmit_done = true;
 }
+
+// void mcp2515_interrupt_enable() {
+//     DDR_CAN_INTERRUPT &= ~(1 << PIN_CAN_INTERRUPT);  // Set as input
+//     PORT_CAN_INTERRUPT |= (1 << PIN_CAN_INTERRUPT);  // Enable internal pull-up resistor
+// }
 
 /** @brief Initialize the MCP2515 */
 void mcp2515_init() {
