@@ -13,10 +13,13 @@
 // 250 - might go, freq
 // 220kohm - slew rate
 
-#define PERIOD                 1000  // TODO probably wrong
-#define DUTY_CYCLE             500   // TODO probably wrong
-#define DUTY_CYCLE_UPPER_LIMIT 500   // TODO find upper/lower limit of servo
-#define DUTY_CYCLE_LOWER_LIMIT 500   // TODO find upper/lower limit of servo
+// TODO Make sure that all the values are the right format
+#define F_PWM             20  // 20 ms = 50 Hz
+#define F_PWM_CLK         21  // 21 ms, WHY???
+#define CPRD              (F_PWM_CLK / F_PWM)
+#define DUTY_CYCLE_MIDDLE 500   // 1.5 ms, middle value
+#define SERVO_UPPER_LIMIT 1112  // 2.1 ms, lower value
+#define SERVO_LOWER_LIMIT 500   // 0.9 ms, lower value
 
 /**
  * @brief set pin in pmc register
@@ -54,8 +57,8 @@ void pwm_init(void) {
         REG_PWM_CLK,
         PWM_CLK_PREA(1) | PWM_CLK_DIVA(2));  // TODO find out what it does ... something about clock
     SET_PIN_SAM3(REG_PWM_CMR0, PWM_CMR_CPRE_CLKA);
-    SET_PIN_SAM3(REG_PWM_CPRD0, PERIOD);      // sets periode
-    SET_PIN_SAM3(REG_PWM_CDTY0, DUTY_CYCLE);  // sets duty cycle
+    SET_PIN_SAM3(REG_PWM_CPRD0, CPRD);               // sets periode
+    SET_PIN_SAM3(REG_PWM_CDTY0, DUTY_CYCLE_MIDDLE);  // sets duty cycle
     SET_PIN_SAM3(REG_PWM_WPCR,
                  PWM_WPCR_WPCMD);  // enable write protect PWM, TODO why does PWM_WPCR_WPCMD take a
                                    // parameter, and what to set it to???
@@ -68,9 +71,13 @@ void pwm_init(void) {
  * @param duty_cycle the duty_cycle, it will be saturated if it goes out of bound
  */
 void pwm_duty_cycle_guard(uint32_t duty_cycle) {
-    if (duty_cycle < DUTY_CYCLE_LOWER_LIMIT) {
-        duty_cycle = DUTY_CYCLE_LOWER_LIMIT;
-    } else if (duty_cycle > DUTY_CYCLE_UPPER_LIMIT) {
-        duty_cycle = DUTY_CYCLE_UPPER_LIMIT;
+    if ((duty_cycle < SERVO_LOWER_LIMIT) || (duty_cycle > SERVO_UPPER_LIMIT)) return;
+
+    if (duty_cycle < SERVO_LOWER_LIMIT) {
+        duty_cycle = SERVO_LOWER_LIMIT;
+    } else if (duty_cycle > SERVO_UPPER_LIMIT) {
+        duty_cycle = SERVO_UPPER_LIMIT;
     }
+
+    SET_PIN_SAM3(REG_PWM_CDTYUPD0, duty_cycle);
 }
