@@ -3,6 +3,7 @@
 
 #include "can/can_controller.h"
 #include "constants.h"
+#include "ir/ir.h"
 #include "sam.h"
 #include "uart/uart.h"
 
@@ -32,8 +33,10 @@ int main() {
     can_init_def_tx_rx_mb(can_br.value);
 
     can_send(&msg, 0U);
+    ir_init();
 
     while (1) {
-        /* code */
+        uint16_t ir_adc = ir_read();
+        printf("IR ADC Value: %u\r\n", ir_adc);
     }
 }

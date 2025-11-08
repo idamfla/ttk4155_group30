@@ -10,6 +10,7 @@ SOURCE_FILES = \
 	main.c \
 	can/can_controller.c \
 	can/can_interrupt.c \
+	ir/ir.c \
 	uart/uart.c
 
 # Feel free to ignore anything below this line
