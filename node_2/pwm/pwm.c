@@ -9,12 +9,11 @@
 
 #include "sam.h"
 
-// TODO Make sure that all the values are the right format
 #define DIVA        26U
-#define CPRD        64615U
-#define CDTY_MIN    2908  // 0.9 ms, lower value
-#define CDTY_MIDDLE 4846  // 1.5 ms, middle value
-#define CDTY_MAX    6784  // 2.1 ms, lower value
+#define CPRD        64612U  // period
+#define CDTY_MIN    2909    // 0.9 ms, lower value
+#define CDTY_MIDDLE 4846    // 1.5 ms, middle value
+#define CDTY_MAX    6784    // 2.1 ms, lower value
 
 // clang-format off
 /**
@@ -30,28 +29,15 @@
 
 void pwm_init(void) {
     // ----- CLOCK -----
-    REG_PMC_WPMR &= ~(PMC_WPMR_WPEN);      // disable write protect PMC
-    REG_PMC_PCER0 = (1 << ID_PIOB);        // enable clock for peripheral with ID 12
-    REG_PMC_PCER1 = (1 << (ID_PWM - 32));  // enable clock for peripheral with ID 36
-    if (REG_PMC_WPSR & PMC_WPSR_WPVS) {
-        printf("PMC WP was violated");
-        return;
-    }
-    REG_PMC_WPMR = PMC_WPMR_WPEN;  // enable write protect PMC
-    printf("Reg %d\r\n", REG_PMC_WPMR);
+    REG_PMC_PCER0 |= (1 << ID_PIOB);        // enable clock for peripheral with ID 12
+    REG_PMC_PCER1 |= (1 << (ID_PWM - 32));  // enable clock for peripheral with ID 36
 
     // ----- PIO CONFIGURATION -----
-    REG_PIOB_WPMR &= ~(PIO_WPMR_WPEN);  // disable write protect PIO
-    REG_PIOB_PDR = PIO_PDR_P13;         // enables peripheral control of PB13
-    REG_PIOB_ABSR = PIO_ABSR_P13;       // peripheral B function of PID12 to PB13
-    REG_PIOB_MDDR = PIO_MDDR_P13;       // ensures the peripheral can drive the pin fully
-    if (REG_PIOB_WPSR & PIO_WPSR_WPVS) {
-        printf("PIOB WP was violated");
-        return;
-    }
-    REG_PIOB_WPMR = PIO_WPMR_WPEN;  // enable write protect PIO
+    REG_PIOB_PDR = PIO_PDR_P13;    // enables peripheral control of PB13
+    REG_PIOB_ABSR = PIO_ABSR_P13;  // peripheral B function of PID12 to PB13
+    REG_PIOB_MDDR = PIO_MDDR_P13;  // ensures the peripheral can drive the pin fully
 
-    PWM_WP_ENABLE(0);
+    PWM_WP_ENABLE(0);  // disable pwm wp
     if ((REG_PWM_WPSR & PWM_WPSR_WPHWS0) | (REG_PWM_WPSR & PWM_WPSR_WPHWS1)) {
         printf("WP fault, CH0 or CH1 are protected\r\n");
         return;
@@ -62,11 +48,11 @@ void pwm_init(void) {
 
     // ----- CHANNEL MODE -----
     REG_PWM_CMR1 = PWM_CMR_CPRE_CLKA | PWM_CMR_CPOL;
-    REG_PWM_CPRD1 = CPRD;      // sets periode
+    REG_PWM_CPRD1 = CPRD;         // sets periode
     REG_PWM_CDTY1 = CDTY_MIDDLE;  // sets duty cycle, 50%
     REG_PWM_ENA = PWM_ENA_CHID1;  // enable pwm output for channel 0
 
-    PWM_WP_ENABLE(1);
+    PWM_WP_ENABLE(1);  // enable pwm wp
 }
 
 /**
@@ -80,5 +66,5 @@ void pwm_duty_cycle_guard(uint32_t duty_cycle) {
         duty_cycle = CDTY_MAX;
     }
 
-    REG_PWM_CDTYUPD0 |= duty_cycle;
+    REG_PWM_CDTYUPD1 = duty_cycle;
 }
