@@ -18,3 +18,7 @@ typedef struct {
 void CAN_init(void (*can_rx_cmplt)(CAN_DATA* can_data));
 bool CAN_send(CAN_DATA* can_data);
 bool CAN_recieve_msg(volatile uint8_t* rx_data, uint8_t address);
+void setup_interrupt(void);
+void CAN_int_handler(void);
+
+extern volatile bool can_int;
