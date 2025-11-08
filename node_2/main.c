@@ -3,6 +3,7 @@
 
 #include "can/can_controller.h"
 #include "constants.h"
+#include "pwm/pwm.h"
 #include "sam.h"
 #include "uart/uart.h"
 
@@ -32,6 +33,8 @@ int main() {
     can_init_def_tx_rx_mb(can_br.value);
 
     can_send(&msg, 0U);
+
+    pwm_init();
 
     while (1) {
         /* code */

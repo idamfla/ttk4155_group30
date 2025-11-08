@@ -9,6 +9,7 @@ SOURCE_FILES = \
 	$(BOOTUP) \
 	main.c \
 	can/can_controller.c \
+	pwm/pwm.c \
 	can/can_interrupt.c \
 	uart/uart.c
 

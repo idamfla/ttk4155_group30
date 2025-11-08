@@ -38,6 +38,7 @@ void pwm_init(void) {
         return;
     }
     REG_PMC_WPMR = PMC_WPMR_WPEN;  // enable write protect PMC
+    printf("Reg %d\r\n", REG_PMC_WPMR);
 
     // ----- PIO CONFIGURATION -----
     REG_PIOB_WPMR &= ~(PIO_WPMR_WPEN);  // disable write protect PIO
@@ -51,8 +52,8 @@ void pwm_init(void) {
     REG_PIOB_WPMR = PIO_WPMR_WPEN;  // enable write protect PIO
 
     PWM_WP_ENABLE(0);
-    if (REG_PWM_WPSR & PWM_WPSR_WPHWS0 != 0) {
-        printf("WP fault, CH0 is protected\r\n");
+    if ((REG_PWM_WPSR & PWM_WPSR_WPHWS0) | (REG_PWM_WPSR & PWM_WPSR_WPHWS1)) {
+        printf("WP fault, CH0 or CH1 are protected\r\n");
         return;
     }
 
@@ -60,10 +61,10 @@ void pwm_init(void) {
     REG_PWM_CLK = PWM_CLK_PREA(0) | PWM_CLK_DIVA(DIVA);  // set clk div
 
     // ----- CHANNEL MODE -----
-    REG_PWM_CMR0 = PWM_CMR_CPRE_CLKA | PWM_CMR_CPOL;
-    REG_PWM_CPRD0 = CPRD;         // sets periode
-    REG_PWM_CDTY0 = CDTY_MIDDLE;  // sets duty cycle, 50%
-    REG_PWM_ENA = PWM_ENA_CHID0;  // enable pwm output for channel 0
+    REG_PWM_CMR1 = PWM_CMR_CPRE_CLKA | PWM_CMR_CPOL;
+    REG_PWM_CPRD1 = CPRD;      // sets periode
+    REG_PWM_CDTY1 = CDTY_MIDDLE;  // sets duty cycle, 50%
+    REG_PWM_ENA = PWM_ENA_CHID1;  // enable pwm output for channel 0
 
     PWM_WP_ENABLE(1);
 }
@@ -79,5 +80,5 @@ void pwm_duty_cycle_guard(uint32_t duty_cycle) {
         duty_cycle = CDTY_MAX;
     }
 
-    REG_PWM_CDTYUPD0 = duty_cycle;
+    REG_PWM_CDTYUPD0 |= duty_cycle;
 }
