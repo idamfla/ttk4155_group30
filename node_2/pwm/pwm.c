@@ -31,17 +31,17 @@
 void pwm_init(void) {
     // ----- CLOCK -----
     REG_PMC_WPMR &= ~(PMC_WPMR_WPEN);      // disable write protect PMC
-    REG_PMC_PCER1 = (1 << (ID_PWM - 32));  // enable the clock for the pwm peripheral
+    REG_PMC_PCER1 = (1 << (ID_PWM - 32));  // enable the clock for the pwm peripheral, PID36
     if (REG_PMC_WPSR & PMC_WPSR_WPVS) {
         printf("PMC WP was violated");
         return;
     }
     REG_PMC_WPMR = PMC_WPMR_WPEN;  // enable write protect PMC
 
-    // ----- PIO CONFIGURATION -----
+    // ----- PIO CONFIGURATION ----- // TODO decide which port we want to use
     REG_PIOC_WPMR &= ~(PIO_WPMR_WPEN);  // disable write protect PIO
-    REG_PIOC_PDR = PIO_PDR_P3;          // might be wrong, maybe p2
-    REG_PIOC_ABSR = PIO_ABSR_P3;        // might be wrong, maybe p2
+    REG_PIOC_PDR = PIO_PDR_P3;  // enables peripheral control of the pin, TODO find which pin to use
+    REG_PIOC_ABSR = PIO_ABSR_P3;  // TODO is this correct?
     if (REG_PIOC_WPSR & PIO_WPSR_WPVS) {
         printf("PIOC WP was violated");
         return;
