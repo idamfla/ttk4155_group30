@@ -21,7 +21,7 @@
  * @brief disable and enable write protect for the PWM
  * @param value either `0` or `1`, which translate to disable or enable
  */
-#define PWM_WP_ENABLE(value)                                                        \
+#define PWM_WP_ENABLE(value)                                                     \
     (REG_PWM_WPCR = (PWM_WPCR_WPKEY(0x50574D) |                                  \
                      PWM_WPCR_WPRG0 | PWM_WPCR_WPRG1 | PWM_WPCR_WPRG2 |          \
                      PWM_WPCR_WPRG3 | PWM_WPCR_WPRG4 | PWM_WPCR_WPRG5 |          \
@@ -32,27 +32,36 @@ void pwm_init(void) {
     // ----- CLOCK -----
     REG_PMC_WPMR &= ~(PMC_WPMR_WPEN);      // disable write protect PMC
     REG_PMC_PCER1 = (1 << (ID_PWM - 32));  // enable the clock for the pwm peripheral
-    REG_PMC_WPMR = PMC_WPMR_WPEN;          // enable write protect PMC
+    if (REG_PMC_WPSR & PMC_WPSR_WPVS) {
+        printf("PMC WP was violated");
+        return;
+    }
+    REG_PMC_WPMR = PMC_WPMR_WPEN;  // enable write protect PMC
 
-    // ----- SHIELDS ----- // I think
-    // CLEAR_PIN_SAM3(REG_PIOC_WPMR, PIO_WPMR_WPEN);  // disable write protect PIO
-    REG_PIOC_PDR = PIO_PDR_P3;    // might be wrong, maybe p2
-    REG_PIOC_ABSR = PIO_ABSR_P3;  // might be wrong, maybe p2
-    // REG_PIOC_WPMR = PIO_WPMR_WPEN;    // enable write protect PIO
+    // ----- PIO CONFIGURATION -----
+    REG_PIOC_WPMR &= ~(PIO_WPMR_WPEN);  // disable write protect PIO
+    REG_PIOC_PDR = PIO_PDR_P3;          // might be wrong, maybe p2
+    REG_PIOC_ABSR = PIO_ABSR_P3;        // might be wrong, maybe p2
+    if (REG_PIOC_WPSR & PIO_WPSR_WPVS) {
+        printf("PIOC WP was violated");
+        return;
+    }
+    REG_PIOC_WPMR = PIO_WPMR_WPEN;  // enable write protect PIO
 
-    // REG_PWM_WPCR = PWM_WPCR_WPKEY(0x50574D) | PWM_WPCR_WPRG0 | PWM_WPCR_WPRG1 | PWM_WPCR_WPRG2 |
-    // PWM_WPCR_WPRG3 | PWM_WPCR_WPRG4 | PWM_WPCR_WPRG5 | PWM_WPCR_WPCMD(0);
     PWM_WP_ENABLE(0);
+    if (REG_PWM_WPSR & PWM_WPSR_WPHWS0 != 0) {
+        printf("WP fault, CH0 is protected\r\n");
+        return;
+    }
 
     // ----- CLOCK -----
     REG_PWM_CLK = PWM_CLK_PREA(0) | PWM_CLK_DIVA(DIVA);  // set clk div
 
     // ----- CHANNEL MODE -----
-    // SET_PIN_SAM3(REG_PWM_CMR0, PWM_CMR_CPRE_CLKA);
     REG_PWM_CMR0 = PWM_CMR_CPRE_CLKA | PWM_CMR_CPOL;
     REG_PWM_CPRD0 = CPRD;         // sets periode
     REG_PWM_CDTY0 = CDTY_MIDDLE;  // sets duty cycle, 50%
-    REG_PWM_ENA, PWM_ENA_CHID0;   // enable pwm output for channel 0
+    REG_PWM_ENA = PWM_ENA_CHID0;  // enable pwm output for channel 0
 
     PWM_WP_ENABLE(1);
 }
