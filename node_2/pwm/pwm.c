@@ -31,7 +31,7 @@ void pwm_init(void) {
 
     // ----- PIO CONFIGURATION -----
     REG_PIOB_PDR = PIO_PDR_P13;    // enables peripheral control of PB13
-    REG_PIOB_ABSR = PIO_ABSR_P13;  // peripheral B function of PID12 to PB13
+    REG_PIOB_ABSR = PIO_ABSR_P13;  // select Peripheral B function for PB13
     REG_PIOB_MDDR = PIO_MDDR_P13;  // ensures the peripheral can drive the pin fully
 
     PWM_WP_ENABLE(0);  // disable pwm wp
