@@ -9,6 +9,9 @@
 
 #include "sam.h"
 
+/**
+ * @brief Initialize the infrared sensor ADC
+ */
 void ir_init(void) {
     // Enable the peripheral clock for ADC
     PMC->PMC_PCER0 |= (1 << ID_PIOA);          // enable PIOA clock (for ADC pin)
@@ -31,6 +34,10 @@ void ir_init(void) {
     ADC->ADC_CR = ADC_CR_START;
 }
 
+/**
+ * @brief Read the value from the infrared sensor
+ * @return The converted value from the IR sensor (from 0 to 4095)
+ */
 uint16_t ir_read(void) {
     // Read and return the converted value from channel 7
     return ADC->ADC_CDR[7];
