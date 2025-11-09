@@ -85,35 +85,47 @@ int main(void) {
 
     mcp2515_init();
 
-    // oled_init();
-    // ui_init();
+    oled_init();
+    ui_init();
+
+    max156_init();
 
     CAN_init(can_rx_cmplt);
     setup_interrupt();
-    // io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
+    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
     uint8_t msg[10];
+    max156_data_t max156_data;
 
     timer1_init(UPDATE_RATE);
     printf("Starting main loop\r\n");
     can_int = false;
     while (1) {
         if (can_int){
-            printf("CAN interrupt received\r\n");
             CAN_int_handler();
             can_int = false;
         }
+        max156_trigger_conversion();
+        max156_read(&max156_data);
+        _delay_ms(100);
+        printf("Max156 readings: CH0: %d, CH1: %d, CH2: %d, CH3: %d\r\n", max156_data.ch0, max156_data.ch1, max156_data.ch2, max156_data.ch3);
+        msg[0] = max156_data.ch3;
+        msg[1] = max156_data.ch2;
+        CAN_DATA can_data = {
+            .id = 0x45,
+            .data = msg,
+            .length = 2,
+        };
+        CAN_send(&can_data);
         // ui_event_push(&ui, ui_event_draw);
         // io_get_touch_pad(on_touch_pad_data);
         // ui_dispatch(&ui);
-        // mcp2515_bit_modify(0x0F, 0xe0, 0x80);
-        //CAN_send(&test_data2);
     }
     return 0;
 }
 
 // Executed at UPDATE_RATE Hz
 ISR(TIMER1_COMPA_vect) {
-    // io_get_buttons(on_button_data);
-    // ui_event_push(&ui, ui_event_draw);
+    io_get_buttons(on_button_data);
+    ui_event_push(&ui, ui_event_draw);
 }
