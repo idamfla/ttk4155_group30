@@ -12,6 +12,7 @@ SOURCE_FILES = \
 	pwm/pwm.c \
 	can/can_interrupt.c \
 	ir/ir.c \
+	solenoid/solenoid.c \
 	uart/uart.c
 
 # Feel free to ignore anything below this line

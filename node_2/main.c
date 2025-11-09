@@ -6,6 +6,7 @@
 #include "ir/ir.h"
 #include "pwm/pwm.h"
 #include "sam.h"
+#include "solenoid/solenoid.h"
 #include "uart/uart.h"
 
 CAN_MESSAGE msg = {
@@ -13,6 +14,19 @@ CAN_MESSAGE msg = {
     .data_length = 4U,
     .data = {0, 1, 2, 3},
 };
+
+#include "sam.h"
+
+void delay_ms(uint32_t ms) {
+    SysTick->LOAD = (SystemCoreClock / 1000) - 1;
+    SysTick->VAL = 0;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+
+    for (uint32_t i = 0; i < ms; i++) {
+        while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
+    }
+    SysTick->CTRL = 0;
+}
 
 int main() {
     SystemInit();
@@ -37,8 +51,14 @@ int main() {
     ir_init();
 
     pwm_init();
+    solenoid_init();
 
     while (1) {
+        solenoid_set_state(true);
+        delay_ms(500);
+        solenoid_set_state(false);
+        delay_ms(500);
+
         pwm_set_dc(CDTY_MAX);
         uint16_t ir_adc = ir_read();
         printf("IR ADC Value: %u\r\n", ir_adc);
