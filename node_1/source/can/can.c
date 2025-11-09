@@ -77,7 +77,7 @@ static uint8_t init_cmds[] = {
 volatile bool can_int = false;
 uint8_t msg_can[10];
 
-static volatile uint8_t rx_data[10];
+static volatile uint8_t rx_data[20];
 static volatile uint8_t tx_data[10];
 
 static void (*_can_rx_cmplt)(CAN_DATA* can_data);
@@ -175,6 +175,10 @@ void setup_interrupt(void) {
 
 void CAN_int_handler(void) {
     printf("CAN Interrupt Triggered\r\n");
+    mcp2515_bit_modify(MCP_CANINTE, 0x02, 0x00);
+    for (uint8_t i = 0; i < 20; i++) {
+        rx_data[i] = 0;
+    }
     // mcp2515_read(msg_can, MCP_CANINTF, 1);
     // while (!mcp2515_transmit_done());
     // for (uint8_t bit = 8; bit >= 1; bit--) {
@@ -184,20 +188,22 @@ void CAN_int_handler(void) {
     // if ((msg_can[0] & (1 << 0x01)) != 0){
     mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x40);
     while (!mcp2515_transmit_done());
-    printf("Message received in RXB0\r\n");
+    printf("Message received in RXB1\r\n");
     mcp2515_read(rx_data, MCP_RXB1SIDH, 5);
     while (!mcp2515_transmit_done());
-    uint8_t data_length = rx_data[4] & 0xf;
-    mcp2515_read(rx_data + 5, 0x76, data_length);
+    uint8_t data_length = rx_data[6] & 0xf;
+    mcp2515_read(rx_data + 7, 0x76, data_length);
     while (!mcp2515_transmit_done());
     mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x00);
     while(!mcp2515_transmit_done());
-
+    
     CAN_DATA data = {
-        .id = ((uint16_t)(rx_data[0]) << 3) | ((uint16_t)(rx_data[1] & 0b11100000) >> 5),
+        .id = ((uint16_t)(rx_data[2]) << 3) | ((uint16_t)(rx_data[3] & 0b11100000) >> 5),
         .length = data_length,
-        .data = rx_data + 5};
-        _can_rx_cmplt(&data);
+        .data = rx_data + 9};
+    _can_rx_cmplt(&data);
+    mcp2515_bit_modify(MCP_CANINTE, 0x02, 0x02);
+
     // }
     // else if ((msg_can[0] & (1 << 0x02)) != 0){
     //     printf("Message received in RXB1\r\n");

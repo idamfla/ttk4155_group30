@@ -66,6 +66,7 @@ bool mcp2515_bit_modify(uint8_t port, uint8_t bit_mask, uint8_t data) {
     _transmit_buffer[3] = data;
 
     _transfer.tx_data = _transmit_buffer;
+    _transfer.rx_data = NULL;
     _transfer.length = 4;
 
     return SPI_TRANSMIT(_transfer);
