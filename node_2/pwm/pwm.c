@@ -9,11 +9,8 @@
 
 #include "sam.h"
 
-#define DIVA        26U
-#define CPRD        64612U  // period
-#define CDTY_MIN    2909    // 0.9 ms, lower value
-#define CDTY_MIDDLE 4846    // 1.5 ms, middle value
-#define CDTY_MAX    6784    // 2.1 ms, lower value
+#define DIVA 26U
+#define CPRD 64612U  // period
 
 // clang-format off
 /**
@@ -56,10 +53,10 @@ void pwm_init(void) {
 }
 
 /**
- * @brief makes sure that the pwm never exceeds the bounderies of the servo
- * @param duty_cycle will be saturated if it goes out of bound
+ * @brief Set the duty cycle of the PWM
+ * @param duty_cycle Duty cycle value between CDTY_MIN and CDTY_MAX
  */
-void pwm_duty_cycle_guard(uint32_t duty_cycle) {
+void pwm_set_dc(uint32_t duty_cycle) {
     if (duty_cycle < CDTY_MIN) {
         duty_cycle = CDTY_MIN;
     } else if (duty_cycle > CDTY_MAX) {

@@ -39,6 +39,7 @@ int main() {
     pwm_init();
 
     while (1) {
+        pwm_set_dc(CDTY_MAX);
         uint16_t ir_adc = ir_read();
         printf("IR ADC Value: %u\r\n", ir_adc);
     }
