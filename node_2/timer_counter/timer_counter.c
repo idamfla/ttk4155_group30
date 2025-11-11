@@ -9,10 +9,18 @@
 
 #define TC_WPKEY 0x54494D
 
-void tc0_init(uint8_t ch_mask, uint8_t period) {
+/**
+ * @brief init for the tc0
+ * @param ch_mask masks which channels you want to enabel. The ids are `27`, `28` and `29`
+ * @param period the period of the wave
+ * @note `(1U << ID_TC0)` to enable channel 0
+ * @note `(1U << ID_TC1)` to enable channel 1
+ * @note `(1U << ID_TC2)` to enable channel 2
+ */
+void tc0_init(uint32_t ch_mask, uint8_t period) {
     REG_TC0_WPMR |= TC_WPMR_WPKEY(TC_WPKEY) | TC_WPMR_WPEN;
 
-    if (ch_mask & (1 << ID_TC0)) {
+    if (ch_mask & (1U << ID_TC0)) {
         REG_PMC_PCER0 |= PMC_PCER0_PID27;  // enable clock, TC0
 
         REG_PIOB_PDR |= PIO_PB27;   // enables peripheral control of PB27, TIOB0
@@ -21,11 +29,11 @@ void tc0_init(uint8_t ch_mask, uint8_t period) {
         NVIC_EnableIRQ(TC0_IRQn);  // enables that IRQ line in the NVIC
     }
 
-    if (ch_mask & (1 << ID_TC1)) {
+    if (ch_mask & (1U << ID_TC1)) {
         REG_PMC_PCER0 |= PMC_PCER0_PID28;  // enable clock, TC1
 
-        REG_PIOB_PDR |= PIO_PA2;    // enables peripheral control of PA2, TIOB0
-        REG_PIOB_ABSR &= ~PIO_PA2;  // select Peripheral A function for PA2, TIOB0
+        REG_PIOA_PDR |= PIO_PA2;    // enables peripheral control of PA2, TIOB0
+        REG_PIOA_ABSR &= ~PIO_PA2;  // select Peripheral A function for PA2, TIOB0
         _tc0_channel_init(1, period);
         NVIC_EnableIRQ(TC1_IRQn);  // enables that IRQ line in the NVIC
     }
@@ -33,8 +41,8 @@ void tc0_init(uint8_t ch_mask, uint8_t period) {
     if (ch_mask & (1 << ID_TC2)) {
         REG_PMC_PCER0 |= PMC_PCER0_PID29;  // enable clock, TC2
 
-        REG_PIOB_PDR |= PIO_PA5;    // enables peripheral control of PA5, TIOA2
-        REG_PIOB_ABSR &= ~PIO_PA5;  // select Peripheral A function for PA5, TIOA2
+        REG_PIOA_PDR |= PIO_PA5;    // enables peripheral control of PA5, TIOA2
+        REG_PIOA_ABSR &= ~PIO_PA5;  // select Peripheral A function for PA5, TIOA2
         _tc0_channel_init(2, period);
         NVIC_EnableIRQ(TC2_IRQn);  // enables that Ienable interruptsRQ line in the NVIC
     }

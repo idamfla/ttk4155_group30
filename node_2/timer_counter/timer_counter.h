@@ -13,5 +13,5 @@
 
 // clang-format on
 
-void tc0_init(uint8_t ch_mask, uint8_t period);
+void tc0_init(uint32_t ch_mask, uint8_t period);
 void _tc0_channel_init(uint8_t ch, uint8_t period);
