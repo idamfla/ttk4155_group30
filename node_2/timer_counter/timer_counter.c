@@ -44,7 +44,7 @@ void tc0_init(uint32_t ch_mask, uint8_t period) {
         REG_PIOA_PDR |= PIO_PA5;    // enables peripheral control of PA5, TIOA2
         REG_PIOA_ABSR &= ~PIO_PA5;  // select Peripheral A function for PA5, TIOA2
         _tc0_channel_init(2, period);
-        NVIC_EnableIRQ(TC2_IRQn);  // enables that Ienable interruptsRQ line in the NVIC
+        NVIC_EnableIRQ(TC2_IRQn);  // enable interruptsRQ line in the NVIC
     }
 }
 
@@ -65,4 +65,8 @@ void _tc0_channel_init(uint8_t ch, uint8_t period) {
 
 void TC0_Handler(void) {}
 
-void TC1_Handler(void) {}
+void TC1_Handler(void) {
+    // TODO think the PI should be updated inside here, where should PI_init be called? also where
+    // is the values that the PI holds being used? what is the meaning of PI if you dont use the
+    // values that it holds?
+}
