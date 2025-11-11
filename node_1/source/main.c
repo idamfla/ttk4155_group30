@@ -26,6 +26,7 @@ uint8_t test_data[] = {5};
 CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
 
 static volatile bool _transmit_done = true;
+bool volatile can_joystick_flag = false;
 
 void _spi_transfer_cmplt(void* param) {
     (void)param;  // unused
@@ -91,7 +92,7 @@ int main(void) {
     max156_init();
 
     CAN_init(can_rx_cmplt);
-    setup_interrupt();
+    CAN_setup_interrupt();
     io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
     uint8_t msg[10];
@@ -100,26 +101,29 @@ int main(void) {
     timer1_init(UPDATE_RATE);
     printf("Starting main loop\r\n");
     can_int = false;
+    CAN_DATA can_data = {
+        .id = 0b10011101101,
+        .data = msg,
+        .length = 2,
+    };
     while (1) {
         if (can_int){
             CAN_int_handler();
             can_int = false;
         }
+        if (can_joystick_flag) {
+            CAN_send(&can_data);
+            can_joystick_flag = false;
+        }
+
         max156_trigger_conversion();
+            // _delay_ms(10);
         max156_read(&max156_data);
-        _delay_ms(100);
-        printf("Max156 readings: CH0: %d, CH1: %d, CH2: %d, CH3: %d\r\n", max156_data.ch0, max156_data.ch1, max156_data.ch2, max156_data.ch3);
+            // printf("Max156 readings: CH0: %d, CH1: %d, CH2: %d, CH3: %d\r\n", max156_data.ch0, max156_data.ch1, max156_data.ch2, max156_data.ch3);
         msg[0] = max156_data.ch3;
         msg[1] = max156_data.ch2;
-        CAN_DATA can_data = {
-            .id = 0x45,
-            .data = msg,
-            .length = 2,
-        };
-        CAN_send(&can_data);
-        // ui_event_push(&ui, ui_event_draw);
-        // io_get_touch_pad(on_touch_pad_data);
-        // ui_dispatch(&ui);
+
+        ui_dispatch(&ui);
     }
     return 0;
 }
@@ -128,4 +132,5 @@ int main(void) {
 ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
+    can_joystick_flag = true;
 }

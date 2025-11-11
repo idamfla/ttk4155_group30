@@ -121,6 +121,7 @@ bool CAN_send(CAN_DATA* can_data) {
     mcp2515_write(tx_data, MCP_TXB0SIDH, length);
     while (!mcp2515_transmit_done());
     mcp2515_request_to_send(MCP_RTS_TX0);
+    while(!mcp2515_transmit_done());
     return true;
 }
 
@@ -133,10 +134,10 @@ ISR(INT1_vect) {
     sei();
     can_int = true;
     mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00);
-    while (!mcp2515_transmit_done());
+    // while (!mcp2515_transmit_done());
 }
 
-void setup_interrupt(void) {
+void CAN_setup_interrupt(void) {
     // --- Konfigurer INT1 (PD3) som input ---
     DDRD &= ~(1 << PD3);      // Sett PD3 som input
     PORTD |= (1 << PD3);      // Aktiver pull-up (hvis signalet er åpen kollektor fra MCP2515)
@@ -172,4 +173,5 @@ void CAN_int_handler(void) {
         .data = rx_data + 9};
     _can_rx_cmplt(&data);
     mcp2515_bit_modify(MCP_CANINTE, 0x02, 0x02);
+    while(!mcp2515_transmit_done());
 }

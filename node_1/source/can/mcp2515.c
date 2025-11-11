@@ -73,6 +73,10 @@ bool mcp2515_bit_modify(uint8_t port, uint8_t bit_mask, uint8_t data) {
 }
 
 bool mcp2515_transmit_done() {
+    if (MCP_CANINTF != 0){
+        mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00);
+        while(!transmit_done);
+    }
     return transmit_done;
 }
 
