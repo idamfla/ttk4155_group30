@@ -12,6 +12,7 @@ SOURCE_FILES = \
 	pwm/pwm.c \
 	can/can_interrupt.c \
 	ir/ir.c \
+	quad_encoder/quad_encoder.c \
 	solenoid/solenoid.c \
 	uart/uart.c
 

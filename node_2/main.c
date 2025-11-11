@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "ir/ir.h"
 #include "pwm/pwm.h"
+#include "quad_encoder/quad_encoder.h"
 #include "sam.h"
 #include "solenoid/solenoid.h"
 #include "uart/uart.h"
@@ -52,15 +53,15 @@ int main() {
 
     pwm_init();
     solenoid_init();
+    tc2_qdec_init();
 
     while (1) {
-        solenoid_set_state(true);
-        delay_ms(500);
-        solenoid_set_state(false);
-        delay_ms(500);
-
         pwm_set_dc(CDTY_MAX);
-        uint16_t ir_adc = ir_read();
-        printf("IR ADC Value: %u\r\n", ir_adc);
+        // uint16_t ir_adc = ir_read();
+        // printf("IR ADC Value: %u\r\n", ir_adc);
+        tc2_qdec_reset();
+        delay_ms(100);
+        int32_t pos = tc2_qdec_get_position();
+        printf("Encoder Position: %ld\r\n", pos);
     }
 }
