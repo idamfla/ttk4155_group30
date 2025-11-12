@@ -71,5 +71,6 @@ void TC1_Handler(void) {
     // TODO think the PI should be updated inside here, where should PI_init be called? also where
     // is the values that the PI holds being used? what is the meaning of PI if you dont use the
     // values that it holds?
+    pi_update();
     NVIC_ClearPendingIRQ(TC1_IRQn);
 }
