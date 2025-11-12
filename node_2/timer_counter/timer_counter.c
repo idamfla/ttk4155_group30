@@ -63,10 +63,13 @@ void _tc0_channel_init(uint8_t ch, uint8_t period) {
     tc0->TC_IER |= TC_IER_CPCS;                  // enable interrupt on RC compare match
 }
 
-void TC0_Handler(void) {}
+void TC0_Handler(void) {
+    NVIC_ClearPendingIRQ(TC0_IRQn);
+}
 
 void TC1_Handler(void) {
     // TODO think the PI should be updated inside here, where should PI_init be called? also where
     // is the values that the PI holds being used? what is the meaning of PI if you dont use the
     // values that it holds?
+    NVIC_ClearPendingIRQ(TC1_IRQn);
 }
