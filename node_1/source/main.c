@@ -81,20 +81,13 @@ int main(void) {
     ui_init();
 
     CAN_init();
-    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
-    uint8_t* msg;
+    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = false}, NULL);
+    io_set_led_on_off(&(io_led_on_off_t){.led = 1, .on = false}, NULL);
 
     timer1_init(UPDATE_RATE);
     while (1) {
-        // ui_event_push(&ui, ui_event_draw);
-        // io_get_touch_pad(on_touch_pad_data);
         ui_dispatch(&ui);
-        // mcp2515_bit_modify(0x0F, 0xe0, 0x80);
-        CAN_send(&test_data2);
-        // mcp2515_request_to_send(0x36);
-        //  _delay_ms(500);
-        CAN_recieve_msg(msg, 0x90);
     }
     return 0;
 }

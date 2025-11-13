@@ -11,7 +11,7 @@
 
 void solenoid_init(void) {
     // Enable the peripheral clock for PIOA
-    PMC->PMC_PCER0 = (1U << ID_PIOA);
+    PMC->PMC_PCER0 |= (1U << ID_PIOA);
 
     // Disable PIOA’s peripheral control on PA29 to use it as a GPIO
     PIOA->PIO_PER = PIO_PA6;
