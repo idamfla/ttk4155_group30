@@ -75,7 +75,7 @@ bool mcp2515_bit_modify(uint8_t port, uint8_t bit_mask, uint8_t data) {
 bool mcp2515_transmit_done() {
     if (MCP_CANINTF != 0){
         mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00);
-        while(!transmit_done);
+        while(!transmit_done); //Noe rart her
     }
     return transmit_done;
 }
@@ -90,6 +90,7 @@ bool mcp2515_write(volatile uint8_t* tx_data, uint8_t address, uint8_t length) {
     }
     _transfer.length = length + 2;
     _transfer.tx_data = _transmit_buffer;
+    _transfer.rx_data = NULL;
     return SPI_TRANSMIT(_transfer);
 }
 
@@ -127,6 +128,7 @@ void mcp2515_reset(void) {
     _transmit_buffer[0] = MCP_RESET;
     _transfer.length = 1;
     _transfer.tx_data = _transmit_buffer;
+    _transfer.rx_data = NULL;
     SPI_TRANSMIT(_transfer);
     _delay_us(10);
 }
@@ -141,5 +143,6 @@ bool mcp2515_request_to_send(uint8_t address) {
     _transfer.length = 1;
     _transmit_buffer[0] = address;
     _transfer.tx_data = _transmit_buffer;
+    _transfer.rx_data = NULL;
     return SPI_TRANSMIT(_transfer);
 }

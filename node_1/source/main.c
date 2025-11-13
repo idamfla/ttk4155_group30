@@ -26,7 +26,8 @@ uint8_t test_data[] = {5};
 CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
 
 static volatile bool _transmit_done = true;
-bool volatile can_joystick_flag = false;
+volatile bool can_joystick_flag = false;
+volatile bool can_check_rx = false;
 
 void _spi_transfer_cmplt(void* param) {
     (void)param;  // unused
@@ -92,7 +93,6 @@ int main(void) {
     max156_init();
 
     CAN_init(can_rx_cmplt);
-    CAN_setup_interrupt();
     io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
     uint8_t msg[10];
@@ -102,35 +102,59 @@ int main(void) {
     printf("Starting main loop\r\n");
     can_int = false;
     CAN_DATA can_data = {
-        .id = 0b10011101101,
+        .id = 0x45,
         .data = msg,
-        .length = 2,
+        .length = 1,
     };
     while (1) {
-        if (can_int){
-            CAN_int_handler();
-            can_int = false;
-        }
-        if (can_joystick_flag) {
-            CAN_send(&can_data);
-            can_joystick_flag = false;
-        }
 
         max156_trigger_conversion();
-            // _delay_ms(10);
         max156_read(&max156_data);
-            // printf("Max156 readings: CH0: %d, CH1: %d, CH2: %d, CH3: %d\r\n", max156_data.ch0, max156_data.ch1, max156_data.ch2, max156_data.ch3);
         msg[0] = max156_data.ch3;
-        msg[1] = max156_data.ch2;
+        // msg[1] = max156_data.ch2;
 
+        if (can_joystick_flag) {
+            TIMSK &= ~(1 << OCIE1A);
+            GICR &= ~(1 << INT1);
+            if (!CAN_send(&can_data)){
+                printf("Did not want to send");
+            }
+            can_joystick_flag = false;
+            GIFR |= (1 << INTF1);
+            GICR |= (1 << INT1);
+            TIMSK |= (1 << OCIE1A);
+        }
+        // CAN_recieve_msg(msg + 2, 0x2d);
+        // _delay_ms(10);
+        // CAN_recieve_msg(msg+5, 0x1c);
+        // _delay_ms(10);
+        // printf("Received data: %d, TEC: %d\r\n", msg[4], msg[7]);
+        GICR &= ~(1 << INT1);
         ui_dispatch(&ui);
+        GIFR |= (1 << INTF1);
+        GICR |= (1 << INT1);
+
+        if (can_int && can_check_rx) {
+            TIMSK &= ~(1 << OCIE1A);
+            GICR &= ~(1 << INT1);
+            CAN_int_handler();
+            can_int = false;
+            can_check_rx = false;
+            GIFR |= (1 << INTF1);
+            GICR |= (1 << INT1);
+            TIMSK |= (1 << OCIE1A);
+        }
     }
     return 0;
 }
 
 // Executed at UPDATE_RATE Hz
 ISR(TIMER1_COMPA_vect) {
+    GICR &= ~(1 << INT1);
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
     can_joystick_flag = true;
+    can_check_rx = true;
+    GIFR |= (1 << INTF1);
+    GICR |= (1 << INT1);
 }

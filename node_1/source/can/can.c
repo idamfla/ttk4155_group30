@@ -80,6 +80,8 @@ uint8_t msg_can[10];
 static volatile uint8_t rx_data[20];
 static volatile uint8_t tx_data[10];
 
+CAN_DATA can_data;
+
 static void (*_can_rx_cmplt)(CAN_DATA* can_data);
 
 void CAN_init(void (*can_rx_cmplt)(CAN_DATA* can_data)) {
@@ -102,6 +104,8 @@ void CAN_init(void (*can_rx_cmplt)(CAN_DATA* can_data)) {
 
     while (!mcp2515_transmit_done());
     mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x00);  // loopback mode 0x40, normal 0x00
+
+    CAN_setup_interrupt();
 }
 
 bool CAN_send(CAN_DATA* can_data) {
@@ -119,9 +123,14 @@ bool CAN_send(CAN_DATA* can_data) {
     }
 
     mcp2515_write(tx_data, MCP_TXB0SIDH, length);
-    while (!mcp2515_transmit_done());
+    while (!mcp2515_transmit_done()){
+        printf("Stuck 1");
+    }
     mcp2515_request_to_send(MCP_RTS_TX0);
-    while(!mcp2515_transmit_done());
+    while(!mcp2515_transmit_done()){
+        printf("Stuck 2");
+    }
+    mcp2515_bit_modify(MCP_TXB0CTRL, 0x08, 0x00);  // Clear the TXREQ bit to indicate message has been sent should not be here
     return true;
 }
 
@@ -133,8 +142,9 @@ bool CAN_recieve_msg(volatile uint8_t* rx_data, uint8_t address) {
 ISR(INT1_vect) {
     sei();
     can_int = true;
+    // mcp2515_bit_modify(MCP_CANINTE, 0x02, 0x00);
     mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00);
-    // while (!mcp2515_transmit_done());
+    while (!mcp2515_transmit_done());
 }
 
 void CAN_setup_interrupt(void) {
@@ -159,19 +169,22 @@ void CAN_int_handler(void) {
     for (uint8_t i = 0; i < 20; i++) {
         rx_data[i] = 0;
     }
-
-    printf("Message received in RXB1\r\n");
     mcp2515_read(rx_data, MCP_RXB1SIDH, 5);
     while (!mcp2515_transmit_done());
     uint8_t data_length = rx_data[6] & 0xf;
     mcp2515_read(rx_data + 7, 0x76, data_length);
     while (!mcp2515_transmit_done());
     
-    CAN_DATA data = {
-        .id = ((uint16_t)(rx_data[2]) << 3) | ((uint16_t)(rx_data[3] & 0b11100000) >> 5),
-        .length = data_length,
-        .data = rx_data + 9};
-    _can_rx_cmplt(&data);
+    can_data.id = ((uint16_t)(rx_data[2]) << 3) | ((uint16_t)(rx_data[3] & 0b11100000) >> 5);
+    can_data.length = data_length;
+    can_data.data = rx_data + 9; 
+    // {
+    //     .id = ((uint16_t)(rx_data[2]) << 3) | ((uint16_t)(rx_data[3] & 0b11100000) >> 5),
+    //     .length = data_length,
+    //     .data = rx_data + 9};
+    _can_rx_cmplt(&can_data);
+    mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00);
+    while(!mcp2515_transmit_done());
     mcp2515_bit_modify(MCP_CANINTE, 0x02, 0x02);
     while(!mcp2515_transmit_done());
 }
