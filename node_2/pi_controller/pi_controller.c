@@ -10,29 +10,25 @@
 // #define PI_OUTPUT_MIN
 #define SAMPLE_TIME_MS 10
 
-static PI pi;
-
-void pi_init(uint8_t kp, uint8_t ki, uint8_t output_min, uint8_t output_max) {
-    pi.Kp = kp;
-    pi.Ki = ki;
-    pi.integrator = 0;
-    pi.past_errors = 0;
-    pi.T = SAMPLE_TIME_MS;
-    pi.out_min = output_min;
-    pi.out_max = output_max;
+void pi_init(pi_t* me, int32_t kp, int32_t ki, int32_t T, int32_t output_min, int32_t output_max) {
+    me->Kp = kp;
+    me->Ki = ki * T;
+    me->err_integral = 0;
+    me->out_min = output_min;
+    me->out_max = output_max;
 }
 
-uint8_t pi_update(uint8_t reference, uint8_t measurement) {
-    uint8_t error = reference - measurement;
-    pi.past_errors += error;
+int32_t pi_update(pi_t* me, int32_t reference, int32_t measurement) {
+    int32_t error = reference - measurement;
+    me->err_integral += error;
 
-    uint8_t delta_u = (pi.Kp * error) + (pi.T * pi.Ki * pi.past_errors);
+    int32_t u = (me->Kp * error) + (me->Ki * me->err_integral);
 
-    pi.integrator += delta_u;
-    if (pi.integrator < pi.out_min) {
-        pi.integrator = pi.out_min;
-    } else if (pi.integrator > pi.out_max) {
-        pi.integrator = pi.out_max;
+    if (u < me->out_min) {
+        u = me->out_min;
+    } else if (u > me->out_max) {
+        u = me->out_max;
     }
-    return pi.integrator;
+
+    return u;
 }

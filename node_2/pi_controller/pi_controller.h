@@ -10,19 +10,13 @@
 
 #include "sam.h"
 
-// clang-format off
-
-// clang-format on
-
 typedef struct {
-    uint8_t Kp;
-    uint8_t Ki;
-    uint8_t integrator;
-    uint8_t past_errors;
-    uint8_t T;
-    uint8_t out_min;
-    uint8_t out_max;
-} PI;
+    int32_t Kp;
+    int32_t Ki;
+    volatile int32_t err_integral;
+    int32_t out_min;
+    int32_t out_max;
+} pi_t;
 
-void pi_init(uint8_t kp, uint8_t ki, uint8_t output_min, uint8_t output_max);
-uint8_t pi_update(uint8_t reference, uint8_t measurement);
+void pi_init(pi_t* me, int32_t kp, int32_t ki, int32_t T, int32_t output_min, int32_t output_max);
+int32_t pi_update(pi_t* me, int32_t reference, int32_t measurement);

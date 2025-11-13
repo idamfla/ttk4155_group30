@@ -4,6 +4,7 @@
 #include "can/can_controller.h"
 #include "constants.h"
 #include "ir/ir.h"
+#include "pi_controller/pi_controller.h"
 #include "pwm/pwm.h"
 #include "sam.h"
 #include "solenoid/solenoid.h"
@@ -16,7 +17,7 @@ CAN_MESSAGE msg = {
     .data = {0, 1, 2, 3},
 };
 
-#include "sam.h"
+static pi_t _pi_speed;
 
 void delay_ms(uint32_t ms) {
     SysTick->LOAD = (SystemCoreClock / 1000) - 1;
@@ -29,18 +30,7 @@ void delay_ms(uint32_t ms) {
     SysTick->CTRL = 0;
 }
 
-void timer_handler(void) {
-    // This function will be called every timer interrupt
-    // You can add your periodic code here
-    // printf("Timer interrupt triggered\r\n");
-    static bool state = false;
-    if (state) {
-        PIOB->PIO_SODR = PIO_PB17;
-    } else {
-        PIOB->PIO_CODR = PIO_PB17;
-    }
-    state = !state;
-}
+void timer_handler(void);
 
 int main() {
     SystemInit();
@@ -67,15 +57,27 @@ int main() {
     pwm_init();
     solenoid_init();
 
+    pi_init(&_pi_speed, 2, 1, T_MOTOR_CONTROL, -1000, 1000);
+
     // Enable the peripheral clock for PIOB
     PMC->PMC_PCER0 |= (1U << ID_PIOB);
     PIOB->PIO_PER = PIO_PB17;
     PIOB->PIO_OER = PIO_PB17;
     PIOB->PIO_CODR = PIO_PB17;
 
-    tc0_init(1000, timer_handler);  // 1 second interval
+    tc0_init(T_MOTOR_CONTROL, timer_handler);
 
     while (1) {
         pwm_set_dc(CDTY_MAX);
     }
+}
+
+void timer_handler(void) {
+    int32_t pos_setpoint;
+    int32_t speed_setpoint;
+
+    int32_t pos_current;
+    int32_t speed_current;
+
+    pos_current = pi_update(&_pi_speed, 500, 450);
 }
