@@ -95,7 +95,6 @@ static ui_event_status_t ui_menu_static_default_on_event(ui_menu_static_t *const
 }
 
 void ui_menu_static_draw(ui_menu_static_t const *const me, uint8_t *const buffer, uint8_t line) {
-    // TODO: this needs to be implemented
     uint8_t item = me->scroll_pos + line;
     if (item == me->current_item) {
         FONTS_CPY_CHAR(font5, &buffer[0], '>');
@@ -108,7 +107,6 @@ void ui_menu_static_draw(ui_menu_static_t const *const me, uint8_t *const buffer
     uint8_t i = 0;
     uint8_t j = (i + 2) * 5U;
     char c = text[i];
-    // memset(buffer, 0x00, UI_BUFFER_SIZE);
     while (c != '\0') {
         FONTS_CPY_CHAR(font5, &buffer[j], c);
         j += 5U;
