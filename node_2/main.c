@@ -6,6 +6,7 @@
 #include "ir/ir.h"
 #include "pi_controller/pi_controller.h"
 #include "pwm/pwm.h"
+#include "quad_encoder/quad_encoder.h"
 #include "sam.h"
 #include "solenoid/solenoid.h"
 #include "timer_counter/timer.h"
@@ -32,6 +33,8 @@ void delay_ms(uint32_t ms) {
 
 void timer_handler(void);
 
+static volatile int32_t speed = 0;
+
 int main() {
     SystemInit();
 
@@ -57,6 +60,8 @@ int main() {
     pwm_init();
     solenoid_init();
 
+    tc2_qdec_init();
+
     pi_init(&_pi_speed, 2, 1, T_MOTOR_CONTROL, -1000, 1000);
 
     // Enable the peripheral clock for PIOB
@@ -68,16 +73,28 @@ int main() {
     tc0_init(T_MOTOR_CONTROL, timer_handler);
 
     while (1) {
-        pwm_set_dc(CDTY_MAX);
+        pwm_set_dc_servo(CDTY1_MAX);
+        pwm_set_dc_motor((uint32_t)(CPRD0 / 2U));
+        printf("Speed: %ld\r\n", speed);
     }
 }
 
 void timer_handler(void) {
+    static int32_t pos_prev;
     int32_t pos_setpoint;
     int32_t speed_setpoint;
+    int32_t current_setpoint;
 
     int32_t pos_current;
     int32_t speed_current;
 
-    pos_current = pi_update(&_pi_speed, 500, 450);
+    pos_current = tc2_qdec_get_position() << 16U;
+    speed_current = ((pos_current - pos_prev)) / T_MOTOR_CONTROL;
+
+    // printf("Position: %ld\r\n", pos_current);
+
+    current_setpoint = pi_update(&_pi_speed, 500, speed_current);
+
+    speed = speed_current;
+    pos_prev = pos_current;
 }

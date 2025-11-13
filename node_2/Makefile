@@ -15,6 +15,7 @@ SOURCE_FILES = \
 	pi_controller/pi_controller.c \
 	quad_encoder/quad_encoder.c \
 	solenoid/solenoid.c \
+	timer_counter/timer.c \
 	uart/uart.c
 
 # Feel free to ignore anything below this line
