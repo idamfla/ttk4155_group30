@@ -13,6 +13,7 @@
 typedef struct {
     int32_t Kp;
     int32_t Ki;
+    int32_t integral_max;
     volatile int32_t err_integral;
     int32_t out_min;
     int32_t out_max;

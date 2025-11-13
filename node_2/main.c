@@ -12,6 +12,11 @@
 #include "timer_counter/timer.h"
 #include "uart/uart.h"
 
+#define ABS(x)      ((x) < 0 ? -(x) : (x))
+#define POS_SHIFT   4U
+#define SPEED_SHIFT 20U
+#define CUR_SHIFT   16U
+
 CAN_MESSAGE msg = {
     .id = 0x1,
     .data_length = 4U,
@@ -19,6 +24,7 @@ CAN_MESSAGE msg = {
 };
 
 static pi_t _pi_speed;
+static pi_t _pi_pos;
 
 void delay_ms(uint32_t ms) {
     SysTick->LOAD = (SystemCoreClock / 1000) - 1;
@@ -33,7 +39,12 @@ void delay_ms(uint32_t ms) {
 
 void timer_handler(void);
 
+static volatile int32_t position = 0;
 static volatile int32_t speed = 0;
+static volatile int32_t current = 0;
+static volatile int32_t position_sp = 0;
+static volatile int32_t speed_sp = 0;
+static volatile int32_t pos_sp = 0;
 
 int main() {
     SystemInit();
@@ -62,7 +73,9 @@ int main() {
 
     tc2_qdec_init();
 
-    pi_init(&_pi_speed, 2, 1, T_MOTOR_CONTROL, -1000, 1000);
+    pi_init(&_pi_pos, 320000, 0, T_MOTOR_CONTROL, -150 << SPEED_SHIFT, 150 << SPEED_SHIFT);
+    pi_init(&_pi_speed, 12000000, 100000, T_MOTOR_CONTROL, -((int32_t)CPRD0) << CUR_SHIFT,
+            CPRD0 << CUR_SHIFT);
 
     // Enable the peripheral clock for PIOB
     PMC->PMC_PCER0 |= (1U << ID_PIOB);
@@ -70,31 +83,54 @@ int main() {
     PIOB->PIO_OER = PIO_PB17;
     PIOB->PIO_CODR = PIO_PB17;
 
+    PMC->PMC_PCER0 |= (1U << ID_PIOC);
+    PIOC->PIO_PER = PIO_PC23;
+    PIOC->PIO_OER = PIO_PC23;
+    PIOC->PIO_CODR = PIO_PC23;
+
     tc0_init(T_MOTOR_CONTROL, timer_handler);
 
     while (1) {
+        pos_sp = 200;
+        delay_ms(500);
+        pos_sp = 5600 / 2;
+        delay_ms(500);
+        pos_sp = 5600 - 200;
+        delay_ms(500);
+
         pwm_set_dc_servo(CDTY1_MAX);
-        pwm_set_dc_motor((uint32_t)(CPRD0 / 2U));
-        printf("Speed: %ld\r\n", speed);
+        printf("Position: %ld, Position SP: %ld, Speed: %ld, Speed SP: %ld, Current: %ld\r\n",
+               position, position_sp, speed, speed_sp, current);
     }
 }
 
 void timer_handler(void) {
     static int32_t pos_prev;
-    int32_t pos_setpoint;
+    int32_t pos_setpoint = pos_sp;
     int32_t speed_setpoint;
     int32_t current_setpoint;
 
     int32_t pos_current;
     int32_t speed_current;
 
-    pos_current = tc2_qdec_get_position() << 16U;
-    speed_current = ((pos_current - pos_prev)) / T_MOTOR_CONTROL;
+    pos_current = tc2_qdec_get_position();
+    speed_current = (pos_current - pos_prev);
 
-    // printf("Position: %ld\r\n", pos_current);
+    speed_setpoint = pi_update(&_pi_pos, pos_setpoint, pos_current) >> SPEED_SHIFT;
+    current_setpoint = pi_update(&_pi_speed, speed_setpoint, speed_current) >> CUR_SHIFT;
 
-    current_setpoint = pi_update(&_pi_speed, 500, speed_current);
+    pwm_set_dc_motor(ABS(current_setpoint));
+    if (current_setpoint >= 0) {
+        PIOC->PIO_CODR = PIO_PC23;  // DIR pin low
+    } else {
+        PIOC->PIO_SODR = PIO_PC23;  // DIR pin high
+    }
 
+    position = pos_current;
     speed = speed_current;
+    current = current_setpoint;
+    position_sp = pos_setpoint;
+    speed_sp = speed_setpoint;
+
     pos_prev = pos_current;
 }

@@ -11,11 +11,11 @@
 #include "sam.h"
 
 #define CLOCK_DIVIDER 2
-#define US_PER_SEC    (1000 * 1000)
+#define MS_PER_SEC    (1000)
 
 void (*_timer_cbk)(void);
 
-void tc0_init(uint32_t interval_us, void (*timer_cbk)(void)) {
+void tc0_init(uint32_t interval_ms, void (*timer_cbk)(void)) {
     // Set the callback function
     _timer_cbk = timer_cbk;
 
@@ -31,7 +31,7 @@ void tc0_init(uint32_t interval_us, void (*timer_cbk)(void)) {
                                 | TC_CMR_WAVSEL_UP_RC;      // Reset counter on RC compare
 
     // Compute RC compare value
-    uint32_t rc = (F_CPU / US_PER_SEC / CLOCK_DIVIDER) * interval_us;
+    uint32_t rc = (F_CPU / MS_PER_SEC / CLOCK_DIVIDER) * interval_ms;
 
     TC0->TC_CHANNEL[0].TC_RC = rc;
 

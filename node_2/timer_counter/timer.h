@@ -9,4 +9,4 @@
 
 #include <stdint.h>
 
-void tc0_init(uint32_t interval_us, void (*timer_cbk)(void));
+void tc0_init(uint32_t interval_ms, void (*timer_cbk)(void));

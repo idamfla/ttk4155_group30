@@ -15,6 +15,6 @@
 _Static_assert(CAN_TQ == 16, "CAN_TQ must be 16");
 _Static_assert(CAN_BRP > 0, "CAN_BRP cannot be 0");
 
-#define T_MOTOR_CONTROL 10 * 1000U  // Motor control period in microseconds
+#define T_MOTOR_CONTROL (10)  // Motor control period in milliseconds
 
 #endif  // CONSTANTS_H
