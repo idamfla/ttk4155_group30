@@ -7,6 +7,7 @@
 #include "pwm/pwm.h"
 #include "sam.h"
 #include "solenoid/solenoid.h"
+#include "timer_counter/timer.h"
 #include "uart/uart.h"
 
 CAN_MESSAGE msg = {
@@ -26,6 +27,19 @@ void delay_ms(uint32_t ms) {
         while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
     }
     SysTick->CTRL = 0;
+}
+
+void timer_handler(void) {
+    // This function will be called every timer interrupt
+    // You can add your periodic code here
+    // printf("Timer interrupt triggered\r\n");
+    static bool state = false;
+    if (state) {
+        PIOB->PIO_SODR = PIO_PB17;
+    } else {
+        PIOB->PIO_CODR = PIO_PB17;
+    }
+    state = !state;
 }
 
 int main() {
@@ -53,14 +67,15 @@ int main() {
     pwm_init();
     solenoid_init();
 
-    while (1) {
-        solenoid_set_state(true);
-        delay_ms(500);
-        solenoid_set_state(false);
-        delay_ms(500);
+    // Enable the peripheral clock for PIOB
+    PMC->PMC_PCER0 |= (1U << ID_PIOB);
+    PIOB->PIO_PER = PIO_PB17;
+    PIOB->PIO_OER = PIO_PB17;
+    PIOB->PIO_CODR = PIO_PB17;
 
+    tc0_init(1000, timer_handler);  // 1 second interval
+
+    while (1) {
         pwm_set_dc(CDTY_MAX);
-        uint16_t ir_adc = ir_read();
-        printf("IR ADC Value: %u\r\n", ir_adc);
     }
 }
