@@ -10,8 +10,8 @@
 #include "../constants.h"
 // clang-format on
 
-#include <util/delay.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 
 #include "../gpio/gpio.h"
 #include "../oled/oled.h"
@@ -47,16 +47,16 @@ static void _spi_transfer_cmplt(void* param) {
     transmit_done = true;
 }
 
-// void mcp2515_interrupt_enable() {
-//     DDR_CAN_INTERRUPT &= ~(1 << PIN_CAN_INTERRUPT);  // Set as input
-//     PORT_CAN_INTERRUPT |= (1 << PIN_CAN_INTERRUPT);  // Enable internal pull-up resistor
-// }
-
 /** @brief Initialize the MCP2515 */
 void mcp2515_init() {
     mcp2515_reset();  // Send reset-command
 }
 
+/** @brief Changes specific bits in the can controller
+ * @param port address to register
+ * @param bit_mask select which bits to change
+ * @param data the value it gets changed to
+ */
 bool mcp2515_bit_modify(uint8_t port, uint8_t bit_mask, uint8_t data) {
     if (!transmit_done) return false;
 
@@ -72,14 +72,20 @@ bool mcp2515_bit_modify(uint8_t port, uint8_t bit_mask, uint8_t data) {
     return SPI_TRANSMIT(_transfer);
 }
 
+/** @brief Returns the state of the transmision */
 bool mcp2515_transmit_done() {
-    if (MCP_CANINTF != 0){
+    if (MCP_CANINTF != 0) {
         mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00);
-        while(!transmit_done); //Noe rart her
+        while (!transmit_done);
     }
     return transmit_done;
 }
 
+/** @brief Writes data to a selected register in the can controller
+ * @param tx_data an array of the data that is being sent
+ * @param address Address to the register
+ * @param length Length of the data being sent
+ */
 bool mcp2515_write(volatile uint8_t* tx_data, uint8_t address, uint8_t length) {
     if (!transmit_done || !tx_data) return false;
 
@@ -95,8 +101,10 @@ bool mcp2515_write(volatile uint8_t* tx_data, uint8_t address, uint8_t length) {
 }
 
 /**
- * @brief does some reading i think
- * @param address i think this is the address we want to read from
+ * @brief Reads from a given register in the can controller
+ * @param rx_data Pointer to where the data should be stored
+ * @param address Address being read from
+ * @param length Length of the data being read
  */
 bool mcp2515_read(volatile uint8_t* rx_data, uint8_t address, uint8_t length) {
     if (!transmit_done) return false;
@@ -112,6 +120,9 @@ bool mcp2515_read(volatile uint8_t* rx_data, uint8_t address, uint8_t length) {
     return SPI_TRANSMIT(_transfer);
 }
 
+/** @brief Returns the state of the reading
+ * @param rx_data Pointer to where the status should be stored
+ */
 bool mcp2515_read_status(uint8_t* rx_data) {
     if (!transmit_done) return false;
 

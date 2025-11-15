@@ -7,7 +7,7 @@
 #include "uart/uart.h"
 
 CAN_MESSAGE msg = {
-    .id = 0x1,
+    .id = 0x2,
     .data_length = 4U,
     .data = {0, 1, 2, 3},
 };

@@ -131,9 +131,7 @@ void ui_dispatch(ui_t* const me) {
 
     ui_element_t* active_element = (*me->element_stack.stack_top);
     if (event == ui_event_draw) {
-        if (me->line != 0) {
-            return;
-        }
+        if (me->line != 0) return;
         ui_element_draw_vcall(active_element, me->graphics_buffer, me->line++);
         oled_write_to_display(me->graphics_buffer, UI_BUFFER_SIZE,
                               (void (*)(void*))ui_draw_complete, me);
