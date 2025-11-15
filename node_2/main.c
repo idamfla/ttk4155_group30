@@ -78,7 +78,7 @@ int main() {
 
     tc0_init(T_MOTOR_CONTROL, timer_handler);
 
-    // motor_ctrl_speed(5, false);
+    motor_ctrl_speed(5, false);
     printf("Game state: %d\r\n", game.state);
     game_inputs.cmd = game_cmd_init_pos;
     delay_ms(100);
@@ -107,7 +107,7 @@ int main() {
         // delay_ms(2000);
         // game_inputs.pos_joystick = 255;
 
-        motor_get_state(&motor_state);
+        // motor_get_state(&motor_state);
         // printf("Pos: %ld, Speed: %ld, Curr: %ld\r\n", motor_state.pos_current,
         //        motor_state.speed_current, motor_state.current_setpoint);
         // printf("Pos: %ld, Pos setpoint: %ld, ", motor_state.pos_current,
@@ -115,8 +115,8 @@ int main() {
         // motor_state.speed_current,
         //        motor_state.speed_setpoint);
         // printf("Curr setpoint: %ld, State: %d\r\n", motor_state.current_setpoint, game.state);
-        // printf("Game state: %d\r\n", game.state);
-        printf("IR value: %d\r\n", ir_read());
+        printf("Game state: %d\r\n", game.state);
+        // printf("IR value: %d\r\n", ir_read());
     }
 }
 

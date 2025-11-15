@@ -75,17 +75,17 @@ void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
             score_sub_counter = 0;
             motor_ctrl_pos(MOTOR_POS_MIN);
             pwm_set_dc_servo(CDTY1_MIDDLE);
-            if (ABS(motor_get_current_position() - MOTOR_POS_MIN) < 5) {
+            if (ABS(motor_get_current_position() - MOTOR_POS_MIN) < MOTOR_POS_REACHED) {
                 game->state = game_waiting_for_start;
             }
-            if (ABS(motor_get_current_speed()) < MOTOR_SPEED_STOPPED_THRESHOLD) {
-                if (++motor_stopped_counter >= GAME_STOPPED_MIN_CYCLES) {
-                    motor_off();
-                    game->state = game_error;
-                }
-            } else {
-                motor_stopped_counter = 0;
-            }
+            // if (ABS(motor_get_current_speed()) < MOTOR_SPEED_STOPPED_THRESHOLD) {
+            //     if (++motor_stopped_counter >= GAME_STOPPED_MIN_CYCLES) {
+            //         motor_off();
+            //         game->state = game_error;
+            //     }
+            // } else {
+            //     motor_stopped_counter = 0;
+            // }
             break;
 
         case game_waiting_for_start:

@@ -29,12 +29,13 @@ _Static_assert(CAN_BRP > 0, "CAN_BRP cannot be 0");
 #define MOTOR_SPEED_FAST  SPEED_MAX
 #define MOTOR_CURRENT_MAX 4200
 #define MOTOR_CURRENT_LOW (MOTOR_CURRENT_MAX / 4)
+#define MOTOR_POS_REACHED 8
 
 #define MOTOR_SPEED_STOPPED_THRESHOLD 2
 
-#define GAME_IR_THRESHOLD       5
+#define GAME_IR_THRESHOLD       500
 #define GAME_SCORE_CLK_DIV      20
-#define GAME_STOPPED_MIN_TIME   100  // in milliseconds
+#define GAME_STOPPED_MIN_TIME   500  // in milliseconds
 #define GAME_STOPPED_MIN_CYCLES (GAME_STOPPED_MIN_TIME / T_MOTOR_CONTROL)
 
 #endif  // CONSTANTS_H
