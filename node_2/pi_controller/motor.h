@@ -20,6 +20,8 @@ typedef struct {
 } motor_state_t;
 
 void motor_get_state(motor_state_t* state);
+int32_t motor_get_current_speed(void);
+int32_t motor_get_current_position(void);
 void motor_off(void);
 void motor_init(int32_t speed_max, int32_t current_max);
 void motor_ctrl_pos(int32_t pos_setpoint);

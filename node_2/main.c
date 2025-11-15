@@ -23,8 +23,7 @@ volatile game_t game;
 game_inputs_t game_inputs = {
     .pos_joystick = 128,
     .pos_slider = 128,
-    .start = 0,
-    .reset = 0,
+    .cmd = game_cmd_none,
     .solenoid_out = 0,
 };
 volatile int32_t pos_sp = 0;
@@ -81,7 +80,7 @@ int main() {
     PIOC->PIO_OER = PIO_PC23;
     PIOC->PIO_CODR = PIO_PC23;
 
-    motor_init(MOTOR_SPEED_SLOW, CPRD0);
+    game_init(&game);
     tc0_init(T_MOTOR_CONTROL, timer_handler);
 
     while (1) {

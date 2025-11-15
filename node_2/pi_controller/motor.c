@@ -36,6 +36,14 @@ void motor_get_state(motor_state_t* state) {
     state->speed_current = _speed_current;
 }
 
+int32_t motor_get_current_speed(void) {
+    return _speed_current;
+}
+
+int32_t motor_get_current_position(void) {
+    return _pos_current;
+}
+
 void motor_off(void) {
     pwm_set_dc_motor(0);
 }
@@ -44,8 +52,8 @@ void motor_init(int32_t speed_max, int32_t current_max) {
     if (speed_max > MOTOR_SPEED_MAX) {
         speed_max = MOTOR_SPEED_MAX;
     }
-    if (current_max > CPRD0) {
-        current_max = CPRD0;
+    if (current_max > MOTOR_CURRENT_MAX) {
+        current_max = MOTOR_CURRENT_MAX;
     }
     pi_init(&_pi_pos, MOTOR_POS_KP, MOTOR_POS_KI, T_MOTOR_CONTROL, -speed_max << SPEED_SHIFT,
             speed_max << SPEED_SHIFT);

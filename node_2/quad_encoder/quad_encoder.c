@@ -9,6 +9,8 @@
 
 #include "sam.h"
 
+int32_t _quad_encoder_offset = 0;
+
 /**
  * @brief Initialize Timer Counter 2 (TC2) for quadrature decoding.
  */
@@ -41,12 +43,12 @@ void tc2_qdec_init(void) {
  * @return int32_t Current position value.
  */
 int32_t tc2_qdec_get_position(void) {
-    return (int32_t)TC2->TC_CHANNEL[0].TC_CV;
+    return ((int32_t)TC2->TC_CHANNEL[0].TC_CV) + _quad_encoder_offset;
 }
 
 /**
  * @brief Reset the quadrature encoder position to zero.
  */
 void tc2_qdec_reset(void) {
-    TC2->TC_CHANNEL[0].TC_CCR = TC_CCR_SWTRG;
+    _quad_encoder_offset = -tc2_qdec_get_position();
 }
