@@ -9,7 +9,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define CPRD0 4200U
+#include "constants.h"
+
+#define CPRD0 MOTOR_CURRENT_MAX
 #define CPRD1 64612U
 
 #define CDTY1_MIN    2909  // 0.9 ms, lower value
