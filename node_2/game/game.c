@@ -14,21 +14,22 @@
 #include "quad_encoder/quad_encoder.h"
 #include "solenoid/solenoid.h"
 
-#define GAME_IR_THRESHOLD  1000
-#define GAME_SCORE_CLK_DIV 20
-
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
 // pos joystick: 66 - 246
 // pos slider: 0 - 255
 
 void game_init(volatile game_t* game) {
+    pwm_init();
+    ir_init();
+    tc2_qdec_init();
+    solenoid_init();
     game->score = 0;
     game->state = game_pos_invalid;
     motor_init(MOTOR_SPEED_SLOW, MOTOR_CURRENT_LOW);
 }
 
-void game_update(volatile game_t* game, game_inputs_t* inputs) {
+void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
     static uint32_t score_sub_counter;
     static uint32_t motor_stopped_counter;
     switch (game->state) {
@@ -50,40 +51,45 @@ void game_update(volatile game_t* game, game_inputs_t* inputs) {
                 game->state = game_init_pos;
             } else if (inputs->cmd == game_cmd_start_game) {
                 motor_stopped_counter = 0;
+                motor_init(MOTOR_SPEED_SLOW, MOTOR_CURRENT_LOW);
                 game->state = game_start_game;
             }
             break;
 
         case game_init_pos:
             // Endstop reached
-            if (motor_get_current_speed() < MOTOR_SPEED_STOPPED_THRESHOLD) {
+            motor_ctrl_speed(-MOTOR_SPEED_SLOW, false);
+            if (ABS(motor_get_current_speed()) < MOTOR_SPEED_STOPPED_THRESHOLD) {
                 if (++motor_stopped_counter >= GAME_STOPPED_MIN_CYCLES) {
                     motor_off();
                     tc2_qdec_reset();
                     game->state = game_idle;
                 }
             } else {
-                motor_ctrl_speed(-MOTOR_SPEED_SLOW, false);
+                motor_stopped_counter = 0;
             }
             break;
 
         case game_start_game:
             game->score = 0;
             score_sub_counter = 0;
-            pwm_set_dc_servo(CDTY1_MIDDLE);
-            motor_init(MOTOR_SPEED_SLOW, MOTOR_CURRENT_LOW);
             motor_ctrl_pos(MOTOR_POS_MIN);
+            pwm_set_dc_servo(CDTY1_MIDDLE);
             if (ABS(motor_get_current_position() - MOTOR_POS_MIN) < 5) {
                 game->state = game_waiting_for_start;
-            } else if (motor_get_current_speed() < MOTOR_SPEED_STOPPED_THRESHOLD) {
+            }
+            if (ABS(motor_get_current_speed()) < MOTOR_SPEED_STOPPED_THRESHOLD) {
                 if (++motor_stopped_counter >= GAME_STOPPED_MIN_CYCLES) {
                     motor_off();
                     game->state = game_error;
                 }
+            } else {
+                motor_stopped_counter = 0;
             }
             break;
 
         case game_waiting_for_start:
+            motor_ctrl_pos(MOTOR_POS_MIN);
             if (inputs->solenoid_out) {
                 solenoid_set_state(true);
                 motor_init(MOTOR_SPEED_MAX, MOTOR_CURRENT_MAX);

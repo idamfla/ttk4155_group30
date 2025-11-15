@@ -62,12 +62,6 @@ int main() {
     can_init_def_tx_rx_mb(can_br.value);
 
     can_send(&msg, 0U);
-    ir_init();
-
-    pwm_init();
-    solenoid_init();
-
-    tc2_qdec_init();
 
     // Enable the peripheral clock for PIOB
     PMC->PMC_PCER0 |= (1U << ID_PIOB);
@@ -81,26 +75,55 @@ int main() {
     PIOC->PIO_CODR = PIO_PC23;
 
     game_init(&game);
+
     tc0_init(T_MOTOR_CONTROL, timer_handler);
 
-    while (1) {
-        pos_sp = MOTOR_POS_MIN;
-        delay_ms(2000);
-        pos_sp = MOTOR_POS_MAX;
-        delay_ms(2000);
+    // motor_ctrl_speed(5, false);
+    printf("Game state: %d\r\n", game.state);
+    game_inputs.cmd = game_cmd_init_pos;
+    delay_ms(100);
+    printf("Game state: %d\r\n", game.state);
+    game_inputs.cmd = game_cmd_none;
+    while (game.state != game_idle) {
+        printf("Game state: %d\r\n", game.state);
+    }
+    delay_ms(500);
+    printf("Game state: %d\r\n", game.state);
+    game_inputs.cmd = game_cmd_start_game;
+    printf("Game state: %d\r\n", game.state);
+    while (game.state != game_waiting_for_start) {
+        printf("Game state: %d\r\n", game.state);
+    }
+    delay_ms(500);
+    game_inputs.cmd = game_cmd_none;
+    game_inputs.pos_joystick = 128;
+    game_inputs.pos_slider = 128;
+    game_inputs.solenoid_out = 1;
 
-        // motor_get_state(&motor_state);
-        // // printf("Pos: %ld, Speed: %ld, Curr: %ld\r\n", motor_state.pos_current,
-        // //        motor_state.speed_current, motor_state.current_setpoint);
+    while (1) {
+        // delay_ms(2000);
+        // game_inputs.pos_joystick = 0;
+        // // pos_sp = MOTOR_POS_MAX;
+        // delay_ms(2000);
+        // game_inputs.pos_joystick = 255;
+
+        motor_get_state(&motor_state);
+        // printf("Pos: %ld, Speed: %ld, Curr: %ld\r\n", motor_state.pos_current,
+        //        motor_state.speed_current, motor_state.current_setpoint);
         // printf("Pos: %ld, Pos setpoint: %ld, ", motor_state.pos_current,
         // motor_state.pos_setpoint); printf("Vel: %ld, Vel setpoint: %ld, ",
         // motor_state.speed_current,
         //        motor_state.speed_setpoint);
-        // printf("Curr setpoint: %ld\r\n", motor_state.current_setpoint);
+        // printf("Curr setpoint: %ld, State: %d\r\n", motor_state.current_setpoint, game.state);
+        // printf("Game state: %d\r\n", game.state);
+        printf("IR value: %d\r\n", ir_read());
     }
 }
 
 void timer_handler(void) {
-    // game_update(&game, &game_inputs);
-    motor_ctrl_pos(pos_sp);
+    game_update(&game, &game_inputs);
+    // printf("Game state: %d\r\n", game.state);
+    // delay_ms(1000);
+    //  motor_ctrl_speed(MOTOR_SPEED_SLOW, false);
+    //  motor_ctrl_pos(pos_sp);
 }

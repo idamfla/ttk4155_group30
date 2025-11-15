@@ -19,7 +19,7 @@ typedef struct {
     int32_t speed_current;
 } motor_state_t;
 
-void motor_get_state(motor_state_t* state);
+void motor_get_state(volatile motor_state_t* state);
 int32_t motor_get_current_speed(void);
 int32_t motor_get_current_position(void);
 void motor_off(void);

@@ -49,4 +49,4 @@ typedef struct __attribute__((packed)) {
 _Static_assert(sizeof(game_outputs_t) == 3, "Size of game_cmd_t must be 3 bytes");
 
 void game_init(volatile game_t* game);
-void game_update(volatile game_t* game, game_inputs_t* inputs);
+void game_update(volatile game_t* game, volatile game_inputs_t* inputs);

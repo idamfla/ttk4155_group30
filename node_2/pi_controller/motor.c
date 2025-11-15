@@ -27,7 +27,7 @@ static volatile int32_t _current_setpoint;
 static volatile int32_t _pos_current;
 static volatile int32_t _speed_current;
 
-void motor_get_state(motor_state_t* state) {
+void motor_get_state(volatile motor_state_t* state) {
     state->pos_prev = _pos_prev;
     state->pos_setpoint = _pos_setpoint;
     state->speed_setpoint = _speed_setpoint;
@@ -91,7 +91,7 @@ void motor_ctrl_speed(int32_t speed_setpoint, bool with_pos_loop) {
         _pos_setpoint += speed_setpoint;
         _speed_setpoint = pi_update(&_pi_pos, _pos_setpoint, _pos_current) >> SPEED_SHIFT;
     } else {
-        _speed_setpoint = speed_setpoint << SPEED_SHIFT;
+        _speed_setpoint = speed_setpoint;
     }
     _current_setpoint = pi_update(&_pi_speed, _speed_setpoint, _speed_current) >> CUR_SHIFT;
 
