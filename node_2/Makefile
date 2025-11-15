@@ -11,7 +11,9 @@ SOURCE_FILES = \
 	can/can_controller.c \
 	pwm/pwm.c \
 	can/can_interrupt.c \
+	game/game.c \
 	ir/ir.c \
+	pi_controller/motor.c \
 	pi_controller/pi_controller.c \
 	quad_encoder/quad_encoder.c \
 	solenoid/solenoid.c \

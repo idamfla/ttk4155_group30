@@ -17,4 +17,15 @@ _Static_assert(CAN_BRP > 0, "CAN_BRP cannot be 0");
 
 #define T_MOTOR_CONTROL (10)  // Motor control period in milliseconds
 
+// Motor control parameters
+#define MOTOR_POS_KP     320000
+#define MOTOR_POS_KI     0
+#define MOTOR_SPEED_KP   12000000
+#define MOTOR_SPEED_KI   100000
+#define MOTOR_POS_MIN    200
+#define MOTOR_POS_MAX    (5600 - 200)
+#define MOTOR_SPEED_MAX  150
+#define MOTOR_SPEED_SLOW 20
+#define MOTOR_SPEED_FAST SPEED_MAX
+
 #endif  // CONSTANTS_H

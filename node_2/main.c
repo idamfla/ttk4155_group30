@@ -3,7 +3,9 @@
 
 #include "can/can_controller.h"
 #include "constants.h"
+#include "game/game.h"
 #include "ir/ir.h"
+#include "pi_controller/motor.h"
 #include "pi_controller/pi_controller.h"
 #include "pwm/pwm.h"
 #include "quad_encoder/quad_encoder.h"
@@ -12,19 +14,21 @@
 #include "timer_counter/timer.h"
 #include "uart/uart.h"
 
-#define ABS(x)      ((x) < 0 ? -(x) : (x))
-#define POS_SHIFT   4U
-#define SPEED_SHIFT 20U
-#define CUR_SHIFT   16U
-
 CAN_MESSAGE msg = {
     .id = 0x1,
     .data_length = 4U,
     .data = {0, 1, 2, 3},
 };
-
-static pi_t _pi_speed;
-static pi_t _pi_pos;
+volatile game_t game;
+game_inputs_t game_inputs = {
+    .pos_joystick = 128,
+    .pos_slider = 128,
+    .start = 0,
+    .reset = 0,
+    .solenoid_out = 0,
+};
+volatile int32_t pos_sp = 0;
+volatile motor_state_t motor_state;
 
 void delay_ms(uint32_t ms) {
     SysTick->LOAD = (SystemCoreClock / 1000) - 1;
@@ -38,13 +42,6 @@ void delay_ms(uint32_t ms) {
 }
 
 void timer_handler(void);
-
-static volatile int32_t position = 0;
-static volatile int32_t speed = 0;
-static volatile int32_t current = 0;
-static volatile int32_t position_sp = 0;
-static volatile int32_t speed_sp = 0;
-static volatile int32_t pos_sp = 0;
 
 int main() {
     SystemInit();
@@ -73,10 +70,6 @@ int main() {
 
     tc2_qdec_init();
 
-    pi_init(&_pi_pos, 320000, 0, T_MOTOR_CONTROL, -150 << SPEED_SHIFT, 150 << SPEED_SHIFT);
-    pi_init(&_pi_speed, 12000000, 100000, T_MOTOR_CONTROL, -((int32_t)CPRD0) << CUR_SHIFT,
-            CPRD0 << CUR_SHIFT);
-
     // Enable the peripheral clock for PIOB
     PMC->PMC_PCER0 |= (1U << ID_PIOB);
     PIOB->PIO_PER = PIO_PB17;
@@ -88,49 +81,27 @@ int main() {
     PIOC->PIO_OER = PIO_PC23;
     PIOC->PIO_CODR = PIO_PC23;
 
+    motor_init(MOTOR_SPEED_SLOW, CPRD0);
     tc0_init(T_MOTOR_CONTROL, timer_handler);
 
     while (1) {
-        pos_sp = 200;
-        delay_ms(500);
-        pos_sp = 5600 / 2;
-        delay_ms(500);
-        pos_sp = 5600 - 200;
-        delay_ms(500);
+        pos_sp = MOTOR_POS_MIN;
+        delay_ms(2000);
+        pos_sp = MOTOR_POS_MAX;
+        delay_ms(2000);
 
-        pwm_set_dc_servo(CDTY1_MAX);
-        printf("Position: %ld, Position SP: %ld, Speed: %ld, Speed SP: %ld, Current: %ld\r\n",
-               position, position_sp, speed, speed_sp, current);
+        // motor_get_state(&motor_state);
+        // // printf("Pos: %ld, Speed: %ld, Curr: %ld\r\n", motor_state.pos_current,
+        // //        motor_state.speed_current, motor_state.current_setpoint);
+        // printf("Pos: %ld, Pos setpoint: %ld, ", motor_state.pos_current,
+        // motor_state.pos_setpoint); printf("Vel: %ld, Vel setpoint: %ld, ",
+        // motor_state.speed_current,
+        //        motor_state.speed_setpoint);
+        // printf("Curr setpoint: %ld\r\n", motor_state.current_setpoint);
     }
 }
 
 void timer_handler(void) {
-    static int32_t pos_prev;
-    int32_t pos_setpoint = pos_sp;
-    int32_t speed_setpoint;
-    int32_t current_setpoint;
-
-    int32_t pos_current;
-    int32_t speed_current;
-
-    pos_current = tc2_qdec_get_position();
-    speed_current = (pos_current - pos_prev);
-
-    speed_setpoint = pi_update(&_pi_pos, pos_setpoint, pos_current) >> SPEED_SHIFT;
-    current_setpoint = pi_update(&_pi_speed, speed_setpoint, speed_current) >> CUR_SHIFT;
-
-    pwm_set_dc_motor(ABS(current_setpoint));
-    if (current_setpoint >= 0) {
-        PIOC->PIO_CODR = PIO_PC23;  // DIR pin low
-    } else {
-        PIOC->PIO_SODR = PIO_PC23;  // DIR pin high
-    }
-
-    position = pos_current;
-    speed = speed_current;
-    current = current_setpoint;
-    position_sp = pos_setpoint;
-    speed_sp = speed_setpoint;
-
-    pos_prev = pos_current;
+    // game_update(&game, &game_inputs);
+    motor_ctrl_pos(pos_sp);
 }

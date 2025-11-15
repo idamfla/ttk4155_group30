@@ -20,10 +20,10 @@ int32_t pi_update(pi_t* me, int32_t reference, int32_t measurement) {
     me->err_integral += me->Ki * error;
 
     // Anti-windup
-    if (me->err_integral > (me->out_max >> 1)) {
-        me->err_integral = me->out_max;
-    } else if (me->err_integral < (me->out_min >> 1)) {
-        me->err_integral = me->out_min;
+    if (me->err_integral > (me->out_max / 2)) {
+        me->err_integral = (me->out_max / 2);
+    } else if (me->err_integral < (me->out_min / 2)) {
+        me->err_integral = (me->out_min / 2);
     }
 
     int32_t u = (me->Kp * error) + (me->err_integral);
