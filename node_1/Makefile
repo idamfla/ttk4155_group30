@@ -18,7 +18,7 @@ TARGET_CPU := atmega162
 TARGET_DEVICE := m162
 
 CC := avr-gcc
-CFLAGS := -O -std=c11 -mmcu=$(TARGET_CPU) -ggdb -Wall -Wextra
+CFLAGS := -O -std=c11 -mmcu=$(TARGET_CPU) -ggdb -Wall -Wextra -Wshadow -Wredundant-decls -fno-common
 CFLAGS += -MMD -MP # Auto-generate dependencies
 LDFLAGS := -Wl,-Map,$(BUILD_DIR)/output.map
 

@@ -10,6 +10,7 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "../spi/spi.h"
 
@@ -27,10 +28,8 @@ typedef struct {
 
 static volatile uint8_t _rx_data[BUFFER_SIZE];
 static uint8_t _tx_data[BUFFER_SIZE];
-transfer_param_t _transfer_cmplt_param;
+static transfer_param_t _transfer_cmplt_param;
 static volatile bool _transfer_active = false;
-
-void (*write_cmplt_cbk)(void* cmplt_param);
 
 static spi_transfer_t _transfer = {
     .slave_idx = spi_slave_can,

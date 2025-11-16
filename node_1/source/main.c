@@ -142,13 +142,15 @@ int main(void) {
     can_send(&_can_msg);
 
     while (1) {
-        can_state_t state = can_get_state();
+        can_send(&_can_msg);
+        // can_state_t state = can_get_state();
+        // io_get_buttons(on_button_data);
         // if (state == can_state_idle) {
         //     _delay_ms(1000);
         //     can_init();
         // }
         // printf("Can state: %d\r\n", state);
-        ui_dispatch(&ui);
+        // ui_dispatch(&ui);
         if (_led_state != _prev_led_state) {
             if (io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = _led_state}, NULL)) {
                 _prev_led_state = _led_state;
@@ -162,8 +164,9 @@ int main(void) {
 
 // Executed at UPDATE_RATE Hz
 ISR(TIMER1_COMPA_vect) {
+    io_get_buttons(on_button_data);
     // io_get_buttons(on_button_data);
     // ui_event_push(&ui, ui_event_draw);
-    can_joystick_flag = true;
-    can_rx_flag = true;
+    // can_joystick_flag = true;
+    // can_rx_flag = true;
 }
