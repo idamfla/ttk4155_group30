@@ -89,22 +89,22 @@ int main() {
     // };
     // 1 + 1 + 6 = 8
     // 5
-    // CanInit can_br = {
-    //     .sjw = 2,
-    //     .propag = 1,
-    //     .phase1 = 6,
-    //     .phase2 = 5,
-    //     .brp = 20,
-    //     .smp = CAN_SMP_ONCE,
-    // };
     CanInit can_br = {
         .sjw = (CAN_SJW - 1U),
         .propag = 1,
         .phase1 = 6,
-        .phase2 = 1,
+        .phase2 = 5,
         .brp = 20,
         .smp = CAN_SMP_ONCE,
     };
+    // CanInit can_br = {
+    //     .sjw = (CAN_SJW - 1U),
+    //     .propag = 1,
+    //     .phase1 = 6,
+    //     .phase2 = 1,
+    //     .brp = 20,
+    //     .smp = CAN_SMP_ONCE,
+    // };
 
     can_init(can_br, 0U);
     // can_init_def_tx_rx_mb(can_br.value);
@@ -143,19 +143,17 @@ int main() {
     //     printf("Game state: %d\r\n", game.state);
     // }
     // delay_ms(500);
-    game_inputs.cmd = game_cmd_none;
-    game_inputs.pos_joystick = 128;
-    game_inputs.pos_slider = 128;
-    game_inputs.solenoid_out = 1;
     CanMsg rx_msg;
 
     while (1) {
         if (can_rx(&rx_msg)) {
-            printf("Received CAN message ID: 0x%03X\r\n", rx_msg.id);
+            memcpy(&game_inputs, rx_msg.byte, sizeof(game_inputs_t));
+            printf("Joystick: %d, Slider: %d, Cmd: %d, Solenoid: %d\r\n", game_inputs.pos_joystick,
+                   game_inputs.pos_slider, game_inputs.cmd, game_inputs.solenoid_out);
         }
 
         if (transmit) {
-            printf("Score: %d, State: %d\r\n", game.score, game.state);
+            // printf("Score: %d, State: %d\r\n", game.score, game.state);
             transfer_states();
             transmit = false;
         }
@@ -181,8 +179,8 @@ int main() {
 
 void timer_handler(void) {
     static uint32_t divider = 0;
-    // game_update(&game, &game_inputs);
-    if (divider++ >= (1000U / T_MOTOR_CONTROL)) {
+    game_update(&game, &game_inputs);
+    if (divider++ >= (100U / T_MOTOR_CONTROL)) {
         divider = 0;
         transmit = true;
     }

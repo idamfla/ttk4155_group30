@@ -16,6 +16,7 @@
 #include "ui/ui.h"
 #include "usart/printf.h"
 #include "xmem/xmem.h"
+#include "game/game.h"
 
 #define BAUD        38400  // Baud rate
 #define UBRR0       (F_CPU / 16 / BAUD - 1)
@@ -47,10 +48,10 @@ const spi_transfer_t test = {
     .transfer_start_cbk = NULL,
 };
 
-uint8_t data[] = {10, 20, 30};
+game_inputs_t game_inputs;
 can_message_t _can_msg = {
     .id = 0x1,
-    .data = data,
+    .data = (uint8_t*)&game_inputs,
     .length = 3,
 };
 
@@ -77,20 +78,21 @@ void on_button_data(io_buttons_t* buttons) {
     prev_buttons = *buttons;
 }
 
-void transfer_states() {
+void transfer_states(void) {
     max156_trigger_conversion();
     max156_read(&max156_data);
-    data[0] = max156_data.ch3;
-    data[1] = max156_data.ch1;
+    game_inputs.pos_joystick = max156_data.ch3;
+    game_inputs.pos_slider = max156_data.ch1;
     if (prev_buttons.SR3) {
-        data[2] = (3 << 1);  // reset command
+        game_inputs.cmd = game_cmd_reset;  // reset command
     } else if (prev_buttons.SL3) {
-        data[2] = (1 << 1);  // Init position command
+        game_inputs.cmd = game_cmd_init_pos;  // Init position command
     } else if (start_game_request) {
-        data[2] = (2 << 1);  // Start game command
+        game_inputs.cmd = game_cmd_start_game;  // Start game command
     } else {
-        data[2] = prev_buttons.SR2;  // Solenoid output
+        game_inputs.cmd = game_cmd_none;  // No command
     }
+    game_inputs.solenoid_out = prev_buttons.SR2;  // Solenoid output
     start_game_request = false;
     can_send(&_can_msg);
 }
@@ -157,5 +159,6 @@ int main(void) {
 ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
+    transfer_states();
     // can_send(&_can_msg);
 }
