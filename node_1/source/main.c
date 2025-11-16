@@ -25,6 +25,8 @@ uint8_t arr[3] = {0x01, 0x02, 0x03};
 uint8_t test_data[] = {5};
 CAN_DATA test_data2 = {.id = 0x10, .data = arr, .length = 3};
 
+max156_data_t max156_data;
+
 static volatile bool _transmit_done = true;
 
 void _spi_transfer_cmplt(void* param) {
@@ -41,10 +43,20 @@ const spi_transfer_t test = {
     .transfer_start_cbk = NULL,
 };
 
+uint8_t msg[3];
+
+CAN_DATA can_data_send = {
+    .id = 0x1,
+    .data = msg,
+    .length = 1,
+};
+
 void on_touch_pad_data(io_touch_pad_t* touch_pad) {
     printf("Touch Pad - X: %d, Y: %d, Signal Strength: %d\r\n", touch_pad->x, touch_pad->y,
            touch_pad->signal_strength);
 }
+
+static volatile io_buttons_t prev_buttons = {0};
 
 void on_button_data(io_buttons_t* buttons) {
     static io_buttons_t prev_buttons = {0};
@@ -67,6 +79,26 @@ void on_button_data(io_buttons_t* buttons) {
     //        buttons->nav);
     prev_buttons = *buttons;
 }
+
+void transfer_states() {
+    max156_trigger_conversion();
+    max156_read(&max156_data);
+    msg[0] = max156_data.ch3;
+    msg[1] = max156_data.ch1;
+    if (prev_buttons.SR3) {
+        msg[2] = (3 << 1);  // reset command
+    } else if (prev_buttons.SL3) {
+        msg[2] = (1 << 1);  // Init position command
+    } else if (start_game_request) {
+        msg[2] = (2 << 1);  // Start game command
+    } else {
+        msg[2] = prev_buttons.SR2;  // Solenoid output
+    }
+    start_game_request = false;
+    CAN_send(&can_data_send);
+}
+
+static void can_rx_cmplt(CAN_DATA* can_data) {}
 
 int main(void) {
     printf_init(USART0, UBRR0);

@@ -12,6 +12,7 @@
 
 #include "sam.h"
 
+void (*_can_rx_cmplt)(CAN_MESSAGE* can_msg);
 /**
  * \brief Initialize can bus with predefined number of rx and tx mailboxes,
  * CAN0->CAN_MB[0] is used for transmitting
@@ -22,7 +23,7 @@
  * \retval Success(0) or failure(1)
  */
 uint8_t can_init_def_tx_rx_mb(uint32_t can_br) {
-    return can_init(can_br, 1, 2);
+    return can_init(can_br, 1, 2, _can_rx_cmplt);  // look out for this
 }
 
 /**
@@ -38,7 +39,9 @@ uint8_t can_init_def_tx_rx_mb(uint32_t can_br) {
  * \retval Success(0) or failure(1)
  */
 
-uint8_t can_init(uint32_t can_br, uint8_t num_tx_mb, uint8_t num_rx_mb) {
+uint8_t can_init(uint32_t can_br, uint8_t num_tx_mb, uint8_t num_rx_mb,
+                 void (*can_rx_cmplt)(CAN_MESSAGE* can_msg)) {
+    _can_rx_cmplt = can_rx_cmplt;
     // Make sure num_rx_mb and num_tx_mb is valid
     if ((num_rx_mb > 8) || (num_tx_mb > 8) || (num_rx_mb + num_tx_mb > 8)) {
         return 1;  // Too many mailboxes is configured

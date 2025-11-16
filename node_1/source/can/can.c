@@ -61,7 +61,10 @@ static uint8_t init_cmds[] = {
 
 static uint8_t tx_data[10];
 
-void CAN_init() {
+static void (*_can_rx_cmplt)(CAN_DATA* can_data);
+
+void CAN_init(void (*can_rx_cmplt)(CAN_DATA* can_data)) {
+    _can_rx_cmplt = can_rx_cmplt;
     while (!mcp2515_transmit_done());
     mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x80);  // config mode
 

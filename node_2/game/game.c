@@ -98,8 +98,14 @@ void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
             break;
 
         case game_active:
-            motor_ctrl_pos(MOTOR_POS_MIN +
-                           ((MOTOR_POS_MAX - MOTOR_POS_MIN) * inputs->pos_joystick) / 255);
+            int32_t pos_sp =
+                MOTOR_POS_MIN +
+                ((MOTOR_POS_MAX - MOTOR_POS_MIN) * (inputs->pos_joystick - 66)) / (255 - 66);
+            motor_ctrl_pos(pos_sp);
+            int32_t slider_sp =
+                CDTY1_MIN + ((CDTY1_MAX - CDTY1_MIN) * (inputs->pos_slider - 66)) / (255 - 66);
+            pwm_set_dc_servo(slider_sp);
+            solenoid_set_state(inputs->solenoid_out);
             if (++score_sub_counter >= GAME_SCORE_CLK_DIV) {
                 score_sub_counter = 0;
                 ++game->score;

@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "can/can_controller.h"
 #include "constants.h"
@@ -16,8 +17,7 @@
 
 CAN_MESSAGE msg = {
     .id = 0x1,
-    .data_length = 4U,
-    .data = {0, 1, 2, 3},
+    .data_length = 3U,
 };
 volatile game_t game;
 game_inputs_t game_inputs = {
@@ -38,6 +38,17 @@ void delay_ms(uint32_t ms) {
         while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
     }
     SysTick->CTRL = 0;
+}
+
+void can_rx_cmplt(CAN_MESSAGE* can_msg) {
+    memcpy(&game_inputs, can_msg->data, sizeof(game_inputs_t));
+}
+
+void tarnsfer_states() {
+    msg.data[0] = (game.score >> 8);
+    msg.data[1] = (game.score & 0xFF);
+    msg.data[2] = game.state;
+    can_send(&msg, 0U);
 }
 
 void timer_handler(void);
@@ -122,6 +133,7 @@ int main() {
 
 void timer_handler(void) {
     game_update(&game, &game_inputs);
+    tarnsfer_states();
     // printf("Game state: %d\r\n", game.state);
     // delay_ms(1000);
     //  motor_ctrl_speed(MOTOR_SPEED_SLOW, false);

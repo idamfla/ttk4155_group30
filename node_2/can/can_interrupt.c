@@ -17,6 +17,8 @@
 
 #define DEBUG_INTERRUPT 0
 
+extern void (*_can_rx_cmplt)(CAN_MESSAGE* can_msg);
+
 /**
  * \brief CAN0 Interrupt handler for RX, TX and bus error interrupts
  *
@@ -50,6 +52,7 @@ void CAN0_Handler(void) {
             if (DEBUG_INTERRUPT) printf("%d ", message.data[i]);
         }
         if (DEBUG_INTERRUPT) printf("\n\r");
+        _can_rx_cmplt(&message);
     }
 
     if (can_sr & CAN_SR_MB0) {
@@ -65,7 +68,6 @@ void CAN0_Handler(void) {
     if (can_sr & CAN_SR_TOVF) {
         if (DEBUG_INTERRUPT) printf("CAN0 timer overflow\n\r");
     }
-
     NVIC_ClearPendingIRQ(ID_CAN0);
     // sei();*/
 }
