@@ -8,10 +8,11 @@
 
 #include "spi.h"
 
-#include <avr/interrupt.h>
+// #include <avr/interrupt.h>
 #include <string.h>
 
 #include "../gpio/gpio.h"
+#include "../interrupt.h"
 #include "spi_queue.h"
 
 // #define DDR_SPI DDRB
@@ -150,13 +151,13 @@ void spi_master_init(void) {
 }
 
 bool spi_transfer(const spi_transfer_t* transfer) {
-    cli();
+    uint8_t sreg = INTERRUPT_DISABLE();
     if (spi_queue_push(&_spi_queue, transfer)) {
         _spi_next_transfer();
-        sei();
+        INTERRUPT_RESTORE(sreg);
         return true;
     }
-    sei();
+    INTERRUPT_RESTORE(sreg);
     return false;
 }
 
@@ -171,7 +172,7 @@ void spi_ll_transmit_blocking(uint8_t data) {
 }
 
 ISR(SPI_STC_vect) {
-    cli();
+    uint8_t sreg = INTERRUPT_DISABLE();
     if (_transfer.rx_data) {
         _transfer.rx_data[_data_idx] = SPDR;
     }
@@ -186,5 +187,5 @@ ISR(SPI_STC_vect) {
         }
         _spi_next_transfer();
     }
-    sei();
+    INTERRUPT_RESTORE(sreg);
 }

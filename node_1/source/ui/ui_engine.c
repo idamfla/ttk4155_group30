@@ -7,7 +7,7 @@
 
 #include "ui_engine.h"
 
-#include <avr/interrupt.h>
+#include "../interrupt.h"
 #include <stddef.h>
 
 #include "../oled/oled.h"
@@ -61,9 +61,9 @@ static inline uint8_t ui_element_stack_size(const ui_t* const me) {
 
 bool ui_event_push(ui_t* const me, const ui_event_t event) {
     ui_event_queue_t* queue = &me->event_queue;
-    cli();  // Disable interrupts
+    uint8_t sreg = INTERRUPT_DISABLE();
     if (queue->size >= queue->max_size) {
-        sei();  // Enable interrupts
+        INTERRUPT_RESTORE(sreg);
         return false;
     }
     ++queue->size;
@@ -74,7 +74,8 @@ bool ui_event_push(ui_t* const me, const ui_event_t event) {
     } else {
         queue->back = queue->buffer + queue->max_size - 1;
     }
-    sei();  // Enable interrupts
+
+    INTERRUPT_RESTORE(sreg);
     return true;
 }
 
@@ -121,13 +122,13 @@ static ui_event_status_t ui_send_event(ui_element_t* element, const ui_event_t e
 }
 
 void ui_dispatch(ui_t* const me) {
-    cli();  // Disable interrupts
+    uint8_t sreg = INTERRUPT_DISABLE();
     if (me->event_queue.size == 0) {
-        sei();  // Enable interrupts
+        INTERRUPT_RESTORE(sreg);
         return;
     }
     ui_event_t event = ui_event_pop(me);
-    sei();  // Enable interrupts
+    INTERRUPT_RESTORE(sreg);
 
     ui_element_t* active_element = (*me->element_stack.stack_top);
     if (event == ui_event_draw) {
