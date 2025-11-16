@@ -18,6 +18,7 @@
 #include <avr/io.h>
 #include <stdio.h>
 
+#include "../interrupt.h"
 #include "mcp2515.h"
 #include "mcp2515_const.h"
 
@@ -48,6 +49,7 @@ static uint8_t init_cmds[] = {
     0x02,  // enable interrupts
 };
 
+volatile bool can_ready_to_transmit = false;
 volatile bool can_int = false;
 uint8_t msg_can[10];
 
@@ -77,10 +79,11 @@ void CAN_init(void (*can_rx_cmplt)(CAN_DATA* can_data)) {
  * @param can_data Pointer to CAN_DATA struct containing id, data and length
  */
 bool CAN_send(CAN_DATA* can_data) {
-    // cli();
-    // GICR &= ~(1 << INT1);  // Turning off interrupts while sending CAN message
-    // sei();
-    if (!mcp2515_transmit_done()) return false;
+    // Could have a read function that TXREQ bit is 0 before sending
+    //  cli();
+    //  GICR &= ~(1 << INT1);  // Turning off interrupts while sending CAN message
+    //  sei();
+    //  if (!mcp2515_transmit_done()) return false;
     uint8_t length = 5 + can_data->length;
 
     tx_data[0] = (uint8_t)((can_data->id >> 3) & 0xFF);
@@ -92,13 +95,17 @@ bool CAN_send(CAN_DATA* can_data) {
     for (uint8_t i = 0; i < can_data->length; i++) {
         tx_data[5 + i] = can_data->data[i];
     }
-    mcp2515_write(tx_data, MCP_TXB0SIDH, length);
-    while (!mcp2515_transmit_done());
-    mcp2515_request_to_send(MCP_RTS_TX0);
-    while (!mcp2515_transmit_done());
-    mcp2515_bit_modify(
-        MCP_TXB0CTRL, 0x08,
-        0x00);  // Clear the TXREQ bit to indicate message has been sent, should not be here
+    if (mcp2515_write(tx_data, MCP_TXB0SIDH, length)) {
+        can_ready_to_transmit = true;
+        return true;
+    }
+    return false;
+    // while (!mcp2515_transmit_done());
+    // mcp2515_request_to_send(MCP_RTS_TX0);
+    // while (!mcp2515_transmit_done());
+    // mcp2515_bit_modify(
+    // MCP_TXB0CTRL, 0x08,
+    // 0x00);  // Clear the TXREQ bit to indicate message has been sent, should not be here
     // cli();
     // GICR |= (1 << INT1);  // Re-enable interrupts
     // sei();
@@ -148,6 +155,9 @@ void CAN_int_handler(void) {
     // for (uint8_t i = 0; i < 20; i++) {
     //     rx_data[i] = 0;
     // }
+    uint8_t _sreg = INTERRUPT_DISABLE();
+    GICR &= ~(1 << INT1);
+    INTERRUPT_RESTORE(_sreg);
     mcp2515_read(rx_data, MCP_RXB1SIDH, 5);
     while (!mcp2515_transmit_done());
     uint8_t data_length = rx_data[6] & 0xf;

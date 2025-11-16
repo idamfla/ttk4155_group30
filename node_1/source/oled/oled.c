@@ -1,5 +1,5 @@
 /**
- * @file spi.h
+ * @file oled.h
  * @author Thomas Berg
  * @author Ida Flakstad
  * @brief brief

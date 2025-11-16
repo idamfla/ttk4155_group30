@@ -22,3 +22,4 @@ void CAN_setup_interrupt(void);
 void CAN_int_handler(void);
 
 extern volatile bool can_int;
+extern volatile bool can_ready_to_transmit;

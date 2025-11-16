@@ -22,9 +22,9 @@
 
 #define MCP_TXREQ 0x08
 
-#define DDR_CAN_INTERRUPT  DDRB   // TODO find place
-#define PORT_CAN_INTERRUPT PORTB  // TODO find place
-#define PIN_CAN_INTERRUPT  PIN3   // TODO find place
+// #define DDR_CAN_INTERRUPT  DDRB   // TODO find place
+// #define PORT_CAN_INTERRUPT PORTB  // TODO find place
+// #define PIN_CAN_INTERRUPT  PIN3   // TODO find place
 
 #define BUFFER_SIZE 8U
 

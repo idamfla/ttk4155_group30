@@ -9,6 +9,7 @@
 
 #include "can/can.h"
 #include "can/mcp2515.h"
+#include "interrupt.h"
 #include "io_board/io_board.h"
 #include "max156/max156.h"
 #include "oled/oled.h"
@@ -32,6 +33,7 @@ volatile bool can_joystick_flag = false;
 volatile bool can_rx_flag = false;
 volatile bool io_get_buttons_flag = false;
 volatile bool ui_event_push_flag = false;
+volatile bool can_wait = false;
 
 void _spi_transfer_cmplt(void* param) {
     (void)param;  // unused
@@ -50,7 +52,7 @@ const spi_transfer_t test = {
 CAN_DATA can_data_send = {
     .id = 0x1,
     .data = msg,
-    .length = 3,
+    .length = 1,
 };
 
 static volatile io_buttons_t prev_buttons = {0};
@@ -82,15 +84,15 @@ void on_button_data(io_buttons_t* buttons) {
 }
 
 static void can_rx_cmplt(CAN_DATA* can_data) {
-    // printf("ID: %d, Length: %d, Data: [", can_data->id, can_data->length);
-    // for (size_t i = 0; i < can_data->length; i++) {
-    //     printf("%d, ", can_data->data[i]);
-    // }
-    // printf("]\r\n");
+    printf("ID: %d, Length: %d, Data: [", can_data->id, can_data->length);
+    for (size_t i = 0; i < can_data->length; i++) {
+        printf("%d, ", can_data->data[i]);
+    }
+    printf("]\r\n");
 }
 
 void update_system() {
-    if (can_joystick_flag) {
+    if (can_joystick_flag && !can_wait) {
         max156_trigger_conversion();
         max156_read(&max156_data);
         msg[0] = max156_data.ch3;
@@ -99,18 +101,28 @@ void update_system() {
         if (!CAN_send(&can_data_send)) {
             printf("Did not want to send");
         }
+        can_wait = true;
         can_joystick_flag = false;
+    }
+    if (can_ready_to_transmit) {
+        // printf("transmitting\r\n");
+        if (mcp2515_request_to_send(0x81)) {
+            // printf("transmit sent\r\n");
+            can_wait = false;
+            can_ready_to_transmit = false;
+        }
     }
 
     ui_dispatch(&ui);
 
     if (can_int && can_rx_flag) {
         CAN_int_handler();
+        printf("handler done\r\n");
         can_int = false;
         can_rx_flag = false;
-        cli();
+        uint8_t _sreg = INTERRUPT_DISABLE();
         GICR |= (1 << INT1);
-        sei();
+        INTERRUPT_RESTORE(_sreg);
     }
 }
 
@@ -146,5 +158,5 @@ ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
     can_joystick_flag = true;
-    can_rx_flag = true;
+    // can_rx_flag = true;
 }

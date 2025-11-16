@@ -1,5 +1,5 @@
 /**
- * @file spi.h
+ * @file oled.h
  * @author Thomas Berg
  * @author Ida Flakstad
  * @brief brief
@@ -18,7 +18,7 @@ void oled_go_to_page_and_column(uint8_t page, uint8_t col);
 
 void oled_reset(void);
 
-void oled_write_to_display(uint8_t* tx_data, uint8_t length, void (*transfer_cmplt_cbk)(void* param),
-                        void* param);
+void oled_write_to_display(uint8_t* tx_data, uint8_t length,
+                           void (*transfer_cmplt_cbk)(void* param), void* param);
 
 void oled_clear(void);
