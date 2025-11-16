@@ -9,6 +9,7 @@
 
 // #include "can/can.h"
 // #include "can/mcp2515.h"
+#include "can/can.h"
 #include "io_board/io_board.h"
 #include "max156/max156.h"
 #include "oled/oled.h"
@@ -114,6 +115,9 @@ void on_button_data(io_buttons_t* buttons) {
 //     }
 // }
 
+volatile bool _led_state = 0;
+bool _prev_led_state = 0;
+
 int main(void) {
     printf_init(USART0, UBRR0);
     xmem_init();
@@ -129,13 +133,26 @@ int main(void) {
     max156_init();
 
     // CAN_init(can_rx_cmplt);
-    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
+    can_init();
+    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = _led_state}, NULL);
 
     timer1_init(UPDATE_RATE);
     printf("Starting main loop\r\n");
     // can_int = false;
     // CAN_setup_interrupt();
     while (1) {
+        can_state_t state = can_get_state();
+        if (state == can_state_idle) {
+            can_init();
+        }
+        // printf("Can state: %d\r\n", state);
+        ui_dispatch(&ui);
+        if (_led_state != _prev_led_state) {
+            if (io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = _led_state}, NULL)) {
+                _prev_led_state = _led_state;
+            }
+        }
+
         // update_system();
     }
     return 0;
@@ -143,8 +160,8 @@ int main(void) {
 
 // Executed at UPDATE_RATE Hz
 ISR(TIMER1_COMPA_vect) {
-    io_get_buttons(on_button_data);
-    ui_event_push(&ui, ui_event_draw);
+    // io_get_buttons(on_button_data);
+    // ui_event_push(&ui, ui_event_draw);
     can_joystick_flag = true;
     can_rx_flag = true;
 }

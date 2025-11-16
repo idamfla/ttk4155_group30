@@ -12,7 +12,6 @@
 #include <string.h>
 
 #include "../spi/spi.h"
-#include "mcp2515_const.h"
 
 #define BUFFER_SIZE 10U
 
@@ -34,23 +33,27 @@ static volatile bool _transfer_active = false;
 void (*write_cmplt_cbk)(void* cmplt_param);
 
 static spi_transfer_t _transfer = {
-    .slave_idx = spi_slave_io,
+    .slave_idx = spi_slave_can,
     .transfer_cmplt_cbk = transfer_cmplt,
     .cmplt_param = NULL,
     .transfer_start_cbk = NULL,
 };
 
 static inline bool lock_transfer(void) {
-    bool lock_successful;
-    cli();
-    if (_transfer_active) {
-        lock_successful = false;
-    } else {
-        _transfer_active = true;
-        lock_successful = true;
-    }
-    sei();
-    return lock_successful;
+    // bool lock_successful;
+    // cli();
+    // if (_transfer_active) {
+    //     lock_successful = false;
+    // } else {
+    //     _transfer_active = true;
+    //     lock_successful = true;
+    // }
+    //  sei();
+    // return lock_successful;
+
+    // It should work without a guard because MCP2515 operations are only called from the CAN
+    // state-machine, making concurrent access impossible.
+    return true;
 }
 
 static void transfer_cmplt(void* unused) {
@@ -65,7 +68,7 @@ static void transfer_cmplt(void* unused) {
     _transfer_active = false;
 }
 
-/**
+/**·
  * @attention The first two bytes of tx_data will be overwritten!
  * @param length Length of the data being sent (excluding the 2 bytes for command and address)
  */

@@ -13,6 +13,8 @@
 #include "elements/ui_menu_static.h"
 #include "ui_constants.h"
 
+#include <stdio.h>
+
 #define ELEMENT_STACK_SIZE 4
 #define EVENT_QUEUE_SIZE   5
 
@@ -43,6 +45,8 @@ static void sub_menu_init(void) {
                         sizeof(menu_items) / sizeof(menu_items[0]));
 }
 
+extern volatile bool _led_state;
+
 static ui_event_status_t main_menu_on_event(ui_menu_static_t* const me, const ui_event_t event) {
     ui_event_status_t status;
     (void)me; /* unused parameter */
@@ -52,10 +56,12 @@ static ui_event_status_t main_menu_on_event(ui_menu_static_t* const me, const ui
         case ui_event_button_select:
             switch (me->current_item) {
                 case 0U:
-                    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 1}, NULL);
+                    // io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 1}, NULL);
+                    _led_state = true;
                     break;
                 case 1U:
-                    io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
+                    _led_state = false;
+                    // io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
                     break;
                 case 3U:
                     ui_element_push(&ui, (ui_element_t*)&_sub_menu);

@@ -6,8 +6,11 @@
  */
 
 #pragma once
+
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "mcp2515_const.h"
 
 typedef void (*mcp2515_write_cmplt_t)(void);
 typedef void (*mcp2515_read_cmplt_t)(volatile uint8_t* data);
