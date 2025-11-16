@@ -150,11 +150,11 @@ int main(void) {
     can_send(&_can_msg);
 
     while (1) {
-        can_send(&_can_msg);
         if (can_receive_pending()) {
+            printf("Receiving CAN message\r\n");
             can_receive();
         }
-        can_state_t state = can_get_state();
+        // can_state_t state = can_get_state();
         // io_get_buttons(on_button_data);
         // if (state == can_state_idle) {
         //     _delay_ms(1000);
@@ -176,8 +176,6 @@ int main(void) {
 // Executed at UPDATE_RATE Hz
 ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
-    // io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
-    // can_joystick_flag = true;
-    // can_rx_flag = true;
+    can_send(&_can_msg);
 }

@@ -137,6 +137,13 @@ void can_update(can_event_t event) {
         case can_state_rx_data_bytes:
             if (event == can_event_mcp2515_read_done) {
                 _can_rx_cmplt(&_can_msg_rx);
+                mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00,mcp2515_bit_modify_cmplt);
+                _can_state = can_state_wait_interrupt_clear;
+            }
+            break;
+
+        case can_state_wait_interrupt_clear:
+            if (event == can_event_mcp2515_bit_modify_done) {
                 _can_state = can_state_idle;
             }
             break;

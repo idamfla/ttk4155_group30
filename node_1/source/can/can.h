@@ -32,6 +32,7 @@ typedef enum {
     can_state_wait_rts_done,
     can_state_wait_rx_first_bytes,
     can_state_rx_data_bytes,
+    can_state_wait_interrupt_clear,
 } can_state_t;
 
 typedef struct {
