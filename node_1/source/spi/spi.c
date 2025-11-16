@@ -15,17 +15,6 @@
 #include "../interrupt.h"
 #include "spi_queue.h"
 
-// #define DDR_SPI DDRB
-// #define DD_MOSI DDB5
-// #define DD_SCK  DDB7
-
-// // #define SS DDB4
-// #define DDR_SLAVES  DDRB
-// #define PORT_SLAVES PORTB
-// #define SS1         DDB3
-// #define SS2         DDB4
-// #define DUMMY_DATA  0x00
-
 #define DDR_SPI_MOSI  DDRB
 #define PORT_SPI_MOSI PORTB
 #define PIN_SPI_MOSI  PB5
