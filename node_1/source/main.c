@@ -25,6 +25,7 @@
 uint8_t arr[1] = {0x01};
 uint8_t test_data[] = {5};
 // CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
+
 max156_data_t max156_data;
 
 static volatile bool _transmit_done = true;
@@ -53,13 +54,14 @@ can_message_t _can_msg = {
     .data = data,
     .length = 3,
 };
-
 static volatile io_buttons_t prev_buttons = {0};
 
 void on_touch_pad_data(io_touch_pad_t* touch_pad) {
     printf("Touch Pad - X: %d, Y: %d, Signal Strength: %d\r\n", touch_pad->x, touch_pad->y,
            touch_pad->signal_strength);
 }
+
+static volatile io_buttons_t prev_buttons = {0};
 
 void on_button_data(io_buttons_t* buttons) {
     if (buttons->nav_button && !prev_buttons.nav_button) {
@@ -82,38 +84,23 @@ void on_button_data(io_buttons_t* buttons) {
     prev_buttons = *buttons;
 }
 
-// static void can_rx_cmplt(CAN_DATA* can_data) {
-//     // printf("ID: %d, Length: %d, Data: [", can_data->id, can_data->length);
-//     // for (size_t i = 0; i < can_data->length; i++) {
-//     //     printf("%d, ", can_data->data[i]);
-//     // }
-//     // printf("]\r\n");
-// }
-
-// void update_system() {
-//     if (can_joystick_flag) {
-//         max156_trigger_conversion();
-//         max156_read(&max156_data);
-//         msg[0] = max156_data.ch3;
-//         msg[1] = max156_data.ch1;
-//         msg[2] = prev_buttons.SL1;
-//         if (!CAN_send(&can_data_send)) {
-//             printf("Did not want to send");
-//         }
-//         can_joystick_flag = false;
-//     }
-
-//     ui_dispatch(&ui);
-
-//     if (can_int && can_rx_flag) {
-//         CAN_int_handler();
-//         can_int = false;
-//         can_rx_flag = false;
-//         cli();
-//         GICR |= (1 << INT1);
-//         sei();
-//     }
-// }
+void transfer_states() {
+    max156_trigger_conversion();
+    max156_read(&max156_data);
+    data[0] = max156_data.ch3;
+    data[1] = max156_data.ch1;
+    if (prev_buttons.SR3) {
+        data[2] = (3 << 1);  // reset command
+    } else if (prev_buttons.SL3) {
+        data[2] = (1 << 1);  // Init position command
+    } else if (start_game_request) {
+        data[2] = (2 << 1);  // Start game command
+    } else {
+        data[2] = prev_buttons.SR2;  // Solenoid output
+    }
+    start_game_request = false;
+    can_send(&_can_msg);
+}
 
 volatile bool _led_state = 0;
 bool _prev_led_state = 0;

@@ -14,4 +14,6 @@ extern ui_t ui;
 
 void ui_init(void);
 
+extern volatile bool start_game_request;  // Flag to indicate start game request
+
 #endif /* UI_H */

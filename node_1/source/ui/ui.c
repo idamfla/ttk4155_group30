@@ -36,11 +36,12 @@ static ui_event_status_t sub_menu_on_event(ui_menu_static_t* const me, const ui_
 static ui_event_status_t dynamic_menu_on_event(ui_menu_dynamic_t* const me, const ui_event_t event);
 
 bool led2_state = false;
+volatile bool start_game_request = false;
 
 static void main_menu_init(void) {
     static const char* menu_items[] = {
-        "LED 1: on", "LED 1: off", "Item 3", "Submenu", "Dynamic Menu",
-        "Item 6",    "Item 7",     "Item 8", "Item 9",  "Item 10",
+        "LED 1: on",  "LED 1: off", "Item 3", "Submenu", "Dynamic Menu",
+        "Start game", "Item 7",     "Item 8", "Item 9",  "Item 10",
     };
     ui_menu_static_ctor(&_main_menu, main_menu_on_event, menu_items,
                         sizeof(menu_items) / sizeof(menu_items[0]));
@@ -101,6 +102,11 @@ static ui_event_status_t main_menu_on_event(ui_menu_static_t* const me, const ui
                     break;
                 case 4U:
                     ui_element_push(&ui, (ui_element_t*)&_dynamic_menu);
+                    break;
+                case 5U:
+                    ui_element_push(&ui,
+                                    (ui_element_t*)&_dynamic_menu);  // Placeholder for game menu
+                    start_game_request = true;
                     break;
 
                 default:
