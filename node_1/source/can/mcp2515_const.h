@@ -154,6 +154,16 @@ Copyright 2003 Kimberly Otten Software Consulting
 #define MCP_WAKIF		0x40
 #define MCP_MERRF		0x80
 
+// Custom?
+#define MCP_TXRTSCTRL 0x0d
+#define MCP_BFPCTRL   0x0c
+#define MCP_TXB0SIDL  0x32
+#define MCP_TXB1SIDL  0x42
+#define MCP_TXB2SIDL  0x52
+#define MCP_TXB0SIDH  0x31
+#define MCP_TXB1SIDH  0x41
+#define MCP_TXB2SIDH  0x51
+
 
 
 #endif

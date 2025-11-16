@@ -25,7 +25,6 @@
 uint8_t arr[1] = {0x01};
 uint8_t test_data[] = {5};
 // CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
-uint8_t msg[10];
 max156_data_t max156_data;
 
 static volatile bool _transmit_done = true;
@@ -48,11 +47,12 @@ const spi_transfer_t test = {
     .transfer_start_cbk = NULL,
 };
 
-// CAN_DATA can_data_send = {
-//     .id = 0x1,
-//     .data = msg,
-//     .length = 3,
-// };
+uint8_t data[] = {10, 20, 30};
+can_message_t _can_msg = {
+    .id = 0x1,
+    .data = data,
+    .length = 3,
+};
 
 static volatile io_buttons_t prev_buttons = {0};
 
@@ -138,13 +138,15 @@ int main(void) {
 
     timer1_init(UPDATE_RATE);
     printf("Starting main loop\r\n");
-    // can_int = false;
-    // CAN_setup_interrupt();
+
+    can_send(&_can_msg);
+
     while (1) {
         can_state_t state = can_get_state();
-        if (state == can_state_idle) {
-            can_init();
-        }
+        // if (state == can_state_idle) {
+        //     _delay_ms(1000);
+        //     can_init();
+        // }
         // printf("Can state: %d\r\n", state);
         ui_dispatch(&ui);
         if (_led_state != _prev_led_state) {

@@ -7,12 +7,16 @@
 
 #include "can.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include "../interrupt.h"
 #include "mcp2515.h"
-#include <stdio.h>
 
-#define INIT_CMD_COUNT (sizeof(init_cmds) / sizeof(init_cmds[0]) / 2)
-#define BUFFER_SIZE    10U
+#define INIT_CMD_COUNT  (sizeof(init_cmds) / sizeof(init_cmds[0]) / 2)
+#define BUFFER_SIZE     10U
+#define EXT_ID_HIGH_VAL 0U  // Dummy
+#define EXT_ID_LOW_VAL  0U  // Dummy
 
 static const uint8_t init_cmds[] = {
     MCP_CNF1,
@@ -26,6 +30,7 @@ static const uint8_t init_cmds[] = {
 };
 
 static uint8_t _tx_data[BUFFER_SIZE];
+static const can_message_t* volatile _can_msg;
 
 static volatile can_state_t _can_state;
 static volatile uint8_t init_cmd_counter;
@@ -90,7 +95,27 @@ void can_update(can_event_t event) {
 
         case can_state_idle:
             if (event == can_event_tx_start) {
-                _can_state = can_state_transmitting;
+                _tx_data[2] = (uint8_t)((_can_msg->id >> 3) & 0xFF);
+                _tx_data[3] = (uint8_t)((_can_msg->id << 5) & 0xFF);
+                _tx_data[4] = EXT_ID_HIGH_VAL;
+                _tx_data[5] = EXT_ID_LOW_VAL;
+                _tx_data[6] = _can_msg->length;
+                memcpy(&_tx_data[7], _can_msg->data, _can_msg->length);
+                mcp2515_write(_tx_data, MCP_TXB0SIDH, _can_msg->length + 5, mcp2515_write_cmplt);
+                _can_state = can_state_tx_prepare_data;
+            }
+            break;
+
+        case can_state_tx_prepare_data:
+            if (event == can_event_mcp2515_write_done) {
+                mcp2515_request_to_send(MCP_RTS_TX0, mcp2515_rts_cmplt);
+                _can_state = can_state_wait_rts_done;
+            }
+            break;
+
+        case can_state_wait_rts_done:
+            if (event == can_event_rts_done) {
+                _can_state = can_state_idle;
             }
             break;
 
@@ -102,6 +127,21 @@ void can_update(can_event_t event) {
             break;
     }
     INTERRUPT_RESTORE(sreg);
+}
+
+bool can_send(const can_message_t* can_msg) {
+    if (can_msg->length > (BUFFER_SIZE - 7U)) {
+        return false;
+    }
+    uint8_t sreg = INTERRUPT_DISABLE();
+    if (_can_state != can_state_idle) {
+        INTERRUPT_RESTORE(sreg);
+        return false;
+    }
+    _can_msg = can_msg;
+    can_update(can_event_tx_start);
+    INTERRUPT_RESTORE(sreg);
+    return true;
 }
 
 can_state_t can_get_state(void) {
@@ -125,4 +165,6 @@ void mcp2515_reset_cmplt(void) {
     can_update(can_event_mcp2515_reset_done);
 }
 
-void mcp2515_rts_cmplt(void) {}
+void mcp2515_rts_cmplt(void) {
+    can_update(can_event_rts_done);
+}
