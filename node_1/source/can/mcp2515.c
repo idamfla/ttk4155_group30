@@ -14,6 +14,8 @@
 
 #include "../spi/spi.h"
 
+
+#define MCP_INTERRUPT_PIN PD3
 #define BUFFER_SIZE 10U
 
 static void transfer_cmplt(void* unused);
@@ -65,6 +67,18 @@ static void transfer_cmplt(void* unused) {
         }
     }
     _transfer_active = false;
+}
+
+void mcp2515_init(void) {
+    // Configure MCP_INTERRUPT_PIN as input
+    DDRD &= ~(1 << MCP_INTERRUPT_PIN);
+    // Enable internal pull-up
+    PORTD |= (1 << MCP_INTERRUPT_PIN);
+}
+
+bool mcp2515_interrupt_pending(void) {
+    // Read the state of MCP_INTERRUPT_PIN
+    return !(PIND & (1 << MCP_INTERRUPT_PIN));
 }
 
 /**·

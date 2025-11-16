@@ -19,6 +19,8 @@ typedef void (*mcp2515_read_status_cmplt_t)(uint8_t* status);
 typedef void (*mcp2515_reset_cmplt_t)(void);
 typedef void (*mcp2515_rts_cmplt_t)(void);
 
+void mcp2515_init(void);
+bool mcp2515_interrupt_pending(void);
 bool mcp2515_write(uint8_t* tx_data, uint8_t address, uint8_t length,
                    mcp2515_write_cmplt_t write_cmplt_cbk);
 bool mcp2515_read(uint8_t address, uint8_t length, mcp2515_read_cmplt_t read_cmplt_cbk);

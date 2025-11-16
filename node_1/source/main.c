@@ -118,6 +118,14 @@ void on_button_data(io_buttons_t* buttons) {
 volatile bool _led_state = 0;
 bool _prev_led_state = 0;
 
+void can_rx_cmplt(can_message_t* can_msg) {
+    printf("ID: %d, Length: %d, Data: [", can_msg->id, can_msg->length);
+    for (size_t i = 0; i < can_msg->length; i++) {
+        printf("%d, ", can_msg->data[i]);
+    }
+    printf("]\r\n");
+}
+
 int main(void) {
     printf_init(USART0, UBRR0);
     xmem_init();
@@ -133,7 +141,7 @@ int main(void) {
     max156_init();
 
     // CAN_init(can_rx_cmplt);
-    can_init();
+    can_init(can_rx_cmplt);
     io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = _led_state}, NULL);
 
     timer1_init(UPDATE_RATE);
@@ -143,14 +151,17 @@ int main(void) {
 
     while (1) {
         can_send(&_can_msg);
-        // can_state_t state = can_get_state();
+        if (can_receive_pending()) {
+            can_receive();
+        }
+        can_state_t state = can_get_state();
         // io_get_buttons(on_button_data);
         // if (state == can_state_idle) {
         //     _delay_ms(1000);
         //     can_init();
         // }
         // printf("Can state: %d\r\n", state);
-        // ui_dispatch(&ui);
+        ui_dispatch(&ui);
         if (_led_state != _prev_led_state) {
             if (io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = _led_state}, NULL)) {
                 _prev_led_state = _led_state;
@@ -166,7 +177,7 @@ int main(void) {
 ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     // io_get_buttons(on_button_data);
-    // ui_event_push(&ui, ui_event_draw);
+    ui_event_push(&ui, ui_event_draw);
     // can_joystick_flag = true;
     // can_rx_flag = true;
 }
