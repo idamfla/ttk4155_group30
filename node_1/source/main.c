@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <util/delay.h>
 
-// #include "can/can.h"
 // #include "can/mcp2515.h"
 #include "can/can.h"
 #include "io_board/io_board.h"
@@ -54,12 +53,6 @@ can_message_t _can_msg = {
     .data = data,
     .length = 3,
 };
-static volatile io_buttons_t prev_buttons = {0};
-
-void on_touch_pad_data(io_touch_pad_t* touch_pad) {
-    printf("Touch Pad - X: %d, Y: %d, Signal Strength: %d\r\n", touch_pad->x, touch_pad->y,
-           touch_pad->signal_strength);
-}
 
 static volatile io_buttons_t prev_buttons = {0};
 
@@ -135,11 +128,10 @@ int main(void) {
     timer1_init(UPDATE_RATE);
     printf("Starting main loop\r\n");
 
-    can_send(&_can_msg);
+    // can_send(&_can_msg);
 
     while (1) {
         if (can_receive_pending()) {
-            printf("Receiving CAN message\r\n");
             can_receive();
         }
         // can_state_t state = can_get_state();
@@ -165,5 +157,5 @@ int main(void) {
 ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
-    can_send(&_can_msg);
+    // can_send(&_can_msg);
 }

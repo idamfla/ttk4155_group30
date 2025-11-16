@@ -28,7 +28,7 @@ extern void (*_can_rx_cmplt)(CAN_MESSAGE* can_msg);
  */
 void CAN0_Handler(void) {
     if (DEBUG_INTERRUPT) printf("CAN0 interrupt\n\r");
-    char can_sr = CAN0->CAN_SR;
+    uint32_t can_sr = CAN0->CAN_SR;
 
     // RX interrupt
     if (can_sr & (CAN_SR_MB1 | CAN_SR_MB2))  // Only mailbox 1 and 2 specified for receiving
@@ -52,14 +52,16 @@ void CAN0_Handler(void) {
             if (DEBUG_INTERRUPT) printf("%d ", message.data[i]);
         }
         if (DEBUG_INTERRUPT) printf("\n\r");
-        _can_rx_cmplt(&message);
+        // _can_rx_cmplt(&message);
     }
 
     if (can_sr & CAN_SR_MB0) {
         if (DEBUG_INTERRUPT) printf("CAN0 MB0 ready to send \n\r");
 
         // Disable interrupt
-        CAN0->CAN_IDR = CAN_IER_MB0;
+        // CAN0->CAN_IDR = CAN_IER_MB0;
+
+        CAN0->CAN_MB[0U].CAN_MCR = CAN_MCR_MTCR;
     }
 
     if (can_sr & CAN_SR_ERRP) {
@@ -68,6 +70,6 @@ void CAN0_Handler(void) {
     if (can_sr & CAN_SR_TOVF) {
         if (DEBUG_INTERRUPT) printf("CAN0 timer overflow\n\r");
     }
-    NVIC_ClearPendingIRQ(ID_CAN0);
+    // NVIC_ClearPendingIRQ(ID_CAN0);
     // sei();*/
 }

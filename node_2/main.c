@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "can/can_controller.h"
+// #include "can/can_controller.h"
+#include "can/can.h"
 #include "constants.h"
 #include "game/game.h"
 #include "ir/ir.h"
@@ -15,10 +16,14 @@
 #include "timer_counter/timer.h"
 #include "uart/uart.h"
 
-CAN_MESSAGE msg = {
-    .id = 0x1,
-    .data_length = 3U,
+CanMsg msg = {
+    .id = 0x2,
+    .length = 3U,
 };
+// CAN_MESSAGE msg = {
+//     .id = 0x2,
+//     .data_length = 3U,
+// };
 volatile game_t game;
 game_inputs_t game_inputs = {
     .pos_joystick = 128,
@@ -28,6 +33,7 @@ game_inputs_t game_inputs = {
 };
 volatile int32_t pos_sp = 0;
 volatile motor_state_t motor_state;
+volatile bool transmit = false;
 
 void delay_ms(uint32_t ms) {
     SysTick->LOAD = (SystemCoreClock / 1000) - 1;
@@ -40,15 +46,18 @@ void delay_ms(uint32_t ms) {
     SysTick->CTRL = 0;
 }
 
-void can_rx_cmplt(CAN_MESSAGE* can_msg) {
-    memcpy(&game_inputs, can_msg->data, sizeof(game_inputs_t));
-}
+// void can_rx_cmplt(CAN_MESSAGE* can_msg) {
+//     printf("Received CAN message ID: 0x%03X\r\n", can_msg->id);
+//     // memcpy(&game_inputs, can_msg->data, sizeof(game_inputs_t));
+// }
 
-void tarnsfer_states() {
-    msg.data[0] = (game.score >> 8);
-    msg.data[1] = (game.score & 0xFF);
-    msg.data[2] = game.state;
-    can_send(&msg, 0U);
+void transfer_states() {
+    msg.byte[0] = (game.score >> 8);
+    msg.byte[1] = (game.score & 0xFF);
+    msg.byte[2] = game.state;
+    can_tx(msg);
+    // uint8_t val = can_send(&msg, 0U);
+    // printf("CAN send return value: %d\r\n", val);
 }
 
 void timer_handler(void);
@@ -62,17 +71,45 @@ int main() {
     uart_init(F_CPU, UART_BAUD);
     printf("Hello World\r\n");
 
-    can_br_t can_br = {
+    // can_br_t can_br = {
+    //     .sjw = (CAN_SJW - 1U),
+    //     .prop_seg = (CAN_PROP_SEG - 1U),
+    //     .phase_seg1 = (CAN_PHASE_SEG1 - 1U),
+    //     .phase_seg2 = (CAN_PHASE_SEG2 - 1U),
+    //     .brp = (F_CPU / F_CAN / CAN_TQ),
+    //     .smp = CAN_SMP_ONCE,
+    // };
+    // CanInit can_br = {
+    //     .sjw = (CAN_SJW - 1U),
+    //     .propag = (CAN_PROP_SEG - 1U),
+    //     .phase1 = (CAN_PHASE_SEG1 - 1U),
+    //     .phase2 = (CAN_PHASE_SEG2 - 1U),
+    //     .brp = (F_CPU / F_CAN / CAN_TQ),
+    //     .smp = CAN_SMP_ONCE,
+    // };
+    // 1 + 1 + 6 = 8
+    // 5
+    // CanInit can_br = {
+    //     .sjw = 2,
+    //     .propag = 1,
+    //     .phase1 = 6,
+    //     .phase2 = 5,
+    //     .brp = 20,
+    //     .smp = CAN_SMP_ONCE,
+    // };
+    CanInit can_br = {
         .sjw = (CAN_SJW - 1U),
-        .prop_seg = (CAN_PROP_SEG - 1U),
-        .phase_seg1 = (CAN_PHASE_SEG1 - 1U),
-        .phase_seg2 = (CAN_PHASE_SEG2 - 1U),
-        .brp = (F_CPU / F_CAN / CAN_TQ),
+        .propag = 1,
+        .phase1 = 6,
+        .phase2 = 1,
+        .brp = 20,
         .smp = CAN_SMP_ONCE,
     };
-    can_init_def_tx_rx_mb(can_br.value);
 
-    can_send(&msg, 0U);
+    can_init(can_br, 0U);
+    // can_init_def_tx_rx_mb(can_br.value);
+
+    // can_send(&msg, 0U);
 
     // Enable the peripheral clock for PIOB
     PMC->PMC_PCER0 |= (1U << ID_PIOB);
@@ -90,28 +127,39 @@ int main() {
     tc0_init(T_MOTOR_CONTROL, timer_handler);
 
     motor_ctrl_speed(5, false);
-    printf("Game state: %d\r\n", game.state);
-    game_inputs.cmd = game_cmd_init_pos;
-    delay_ms(100);
-    printf("Game state: %d\r\n", game.state);
-    game_inputs.cmd = game_cmd_none;
-    while (game.state != game_idle) {
-        printf("Game state: %d\r\n", game.state);
-    }
-    delay_ms(500);
-    printf("Game state: %d\r\n", game.state);
-    game_inputs.cmd = game_cmd_start_game;
-    printf("Game state: %d\r\n", game.state);
-    while (game.state != game_waiting_for_start) {
-        printf("Game state: %d\r\n", game.state);
-    }
-    delay_ms(500);
+    // printf("Game state: %d\r\n", game.state);
+    // game_inputs.cmd = game_cmd_init_pos;
+    // delay_ms(100);
+    // printf("Game state: %d\r\n", game.state);
+    // game_inputs.cmd = game_cmd_none;
+    // while (game.state != game_idle) {
+    //     printf("Game state: %d\r\n", game.state);
+    // }
+    // delay_ms(500);
+    // printf("Game state: %d\r\n", game.state);
+    // game_inputs.cmd = game_cmd_start_game;
+    // printf("Game state: %d\r\n", game.state);
+    // while (game.state != game_waiting_for_start) {
+    //     printf("Game state: %d\r\n", game.state);
+    // }
+    // delay_ms(500);
     game_inputs.cmd = game_cmd_none;
     game_inputs.pos_joystick = 128;
     game_inputs.pos_slider = 128;
     game_inputs.solenoid_out = 1;
+    CanMsg rx_msg;
 
     while (1) {
+        if (can_rx(&rx_msg)) {
+            printf("Received CAN message ID: 0x%03X\r\n", rx_msg.id);
+        }
+
+        if (transmit) {
+            printf("Score: %d, State: %d\r\n", game.score, game.state);
+            transfer_states();
+            transmit = false;
+        }
+
         // delay_ms(2000);
         // game_inputs.pos_joystick = 0;
         // // pos_sp = MOTOR_POS_MAX;
@@ -126,14 +174,18 @@ int main() {
         // motor_state.speed_current,
         //        motor_state.speed_setpoint);
         // printf("Curr setpoint: %ld, State: %d\r\n", motor_state.current_setpoint, game.state);
-        printf("Game state: %d\r\n", game.state);
+        //        printf("Game state: %d\r\n", game.state);
         // printf("IR value: %d\r\n", ir_read());
     }
 }
 
 void timer_handler(void) {
-    game_update(&game, &game_inputs);
-    tarnsfer_states();
+    static uint32_t divider = 0;
+    // game_update(&game, &game_inputs);
+    if (divider++ >= (1000U / T_MOTOR_CONTROL)) {
+        divider = 0;
+        transmit = true;
+    }
     // printf("Game state: %d\r\n", game.state);
     // delay_ms(1000);
     //  motor_ctrl_speed(MOTOR_SPEED_SLOW, false);

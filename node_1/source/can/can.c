@@ -20,11 +20,17 @@
 
 static const uint8_t init_cmds[] = {
     MCP_CNF1,
-    ((1U << 6) | 3U),  // SJW= 2TQ, BRP=3 → TQ = 2 * (3+1)/16MHz = 0.5 µs
+    ((1U << 6) | 1U),  // SJW= 2TQ, BRP=3 → TQ = 2 * (3+1)/16MHz = 0.5 µs
+    // 0x41,
     MCP_CNF2,
-    ((1U << 7) | (4U << 3) | (7U << 0)),  // BTLMODE=1, PHSEG1=5, PRSEG=8
+    // ((1U << 7) | (6U << 3) | (1U << 0)),  // BTLMODE=1, PHSEG1=5, PRSEG=8
+    ((1U << 7) | (6U << 3) | (1U << 0)),  // BTLMODE=1, PHSEG1=5, PRSEG=8
+    // 0xF1,
+    // 0xB1,
     MCP_CNF3,
-    ((1U << 0)),  // PHSEG2=2
+    ((5U << 0)),  // PHSEG2=2
+    //00x05,
+    // 1U,
     MCP_CANINTE,
     0x02,  // enable interrupts
 };

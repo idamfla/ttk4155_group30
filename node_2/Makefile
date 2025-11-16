@@ -5,16 +5,18 @@ MCUTYPE = __SAM3X8E__
 # In particular, remember to add the UART and CAN starter files.
 # Use relative file paths and a backslash before newline.
 # Do NOT use a backslash after the last file.
+
+# 	can/can_controller.c
+# 	can/can_interrupt.c
 SOURCE_FILES = \
 	$(BOOTUP) \
 	main.c \
-	can/can_controller.c \
-	pwm/pwm.c \
-	can/can_interrupt.c \
+	can/can.c \
 	game/game.c \
 	ir/ir.c \
 	pi_controller/motor.c \
 	pi_controller/pi_controller.c \
+	pwm/pwm.c \
 	quad_encoder/quad_encoder.c \
 	solenoid/solenoid.c \
 	timer_counter/timer.c \
