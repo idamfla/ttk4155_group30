@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <util/delay.h>
 
-#include "can/can.h"
-#include "can/mcp2515.h"
+// #include "can/can.h"
+// #include "can/mcp2515.h"
 #include "io_board/io_board.h"
 #include "max156/max156.h"
 #include "oled/oled.h"
@@ -23,7 +23,7 @@
 #include "timer/timer.h"
 uint8_t arr[1] = {0x01};
 uint8_t test_data[] = {5};
-CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
+// CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
 uint8_t msg[10];
 max156_data_t max156_data;
 
@@ -47,11 +47,11 @@ const spi_transfer_t test = {
     .transfer_start_cbk = NULL,
 };
 
-CAN_DATA can_data_send = {
-    .id = 0x1,
-    .data = msg,
-    .length = 3,
-};
+// CAN_DATA can_data_send = {
+//     .id = 0x1,
+//     .data = msg,
+//     .length = 3,
+// };
 
 static volatile io_buttons_t prev_buttons = {0};
 
@@ -81,38 +81,38 @@ void on_button_data(io_buttons_t* buttons) {
     prev_buttons = *buttons;
 }
 
-static void can_rx_cmplt(CAN_DATA* can_data) {
-    // printf("ID: %d, Length: %d, Data: [", can_data->id, can_data->length);
-    // for (size_t i = 0; i < can_data->length; i++) {
-    //     printf("%d, ", can_data->data[i]);
-    // }
-    // printf("]\r\n");
-}
+// static void can_rx_cmplt(CAN_DATA* can_data) {
+//     // printf("ID: %d, Length: %d, Data: [", can_data->id, can_data->length);
+//     // for (size_t i = 0; i < can_data->length; i++) {
+//     //     printf("%d, ", can_data->data[i]);
+//     // }
+//     // printf("]\r\n");
+// }
 
-void update_system() {
-    if (can_joystick_flag) {
-        max156_trigger_conversion();
-        max156_read(&max156_data);
-        msg[0] = max156_data.ch3;
-        msg[1] = max156_data.ch1;
-        msg[2] = prev_buttons.SL1;
-        if (!CAN_send(&can_data_send)) {
-            printf("Did not want to send");
-        }
-        can_joystick_flag = false;
-    }
+// void update_system() {
+//     if (can_joystick_flag) {
+//         max156_trigger_conversion();
+//         max156_read(&max156_data);
+//         msg[0] = max156_data.ch3;
+//         msg[1] = max156_data.ch1;
+//         msg[2] = prev_buttons.SL1;
+//         if (!CAN_send(&can_data_send)) {
+//             printf("Did not want to send");
+//         }
+//         can_joystick_flag = false;
+//     }
 
-    ui_dispatch(&ui);
+//     ui_dispatch(&ui);
 
-    if (can_int && can_rx_flag) {
-        CAN_int_handler();
-        can_int = false;
-        can_rx_flag = false;
-        cli();
-        GICR |= (1 << INT1);
-        sei();
-    }
-}
+//     if (can_int && can_rx_flag) {
+//         CAN_int_handler();
+//         can_int = false;
+//         can_rx_flag = false;
+//         cli();
+//         GICR |= (1 << INT1);
+//         sei();
+//     }
+// }
 
 int main(void) {
     printf_init(USART0, UBRR0);
@@ -121,22 +121,22 @@ int main(void) {
 
     spi_master_init();
 
-    mcp2515_init();
+    // mcp2515_init();
 
     oled_init();
     ui_init();
 
     max156_init();
 
-    CAN_init(can_rx_cmplt);
+    // CAN_init(can_rx_cmplt);
     io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = 0}, NULL);
 
     timer1_init(UPDATE_RATE);
     printf("Starting main loop\r\n");
-    can_int = false;
-    CAN_setup_interrupt();
+    // can_int = false;
+    // CAN_setup_interrupt();
     while (1) {
-        update_system();
+        // update_system();
     }
     return 0;
 }

@@ -13,7 +13,6 @@
 
 #include "../gpio/gpio.h"
 #include "spi_queue.h"
-#include "../can/mcp2515.h"
 
 // #define DDR_SPI DDRB
 // #define DD_MOSI DDB5
