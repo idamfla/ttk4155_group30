@@ -14,6 +14,7 @@
 
 #include <stddef.h>
 
+#include "../interrupt.h"
 #include "../spi/spi.h"
 
 typedef enum {
@@ -43,9 +44,9 @@ typedef struct {
 void io_spi_start_cbk(void);
 void io_transfer_cmplt(void* unused);
 
-volatile uint8_t _rx_data[35];
-volatile io_command_t _cmd;
-io_transfer_param_t _transfer_cmplt_param;
+static volatile uint8_t _rx_data[35];
+static volatile io_command_t _cmd;
+static io_transfer_param_t _transfer_cmplt_param;
 static volatile bool _transfer_active = false;
 
 static spi_transfer_t _transfer_data = {

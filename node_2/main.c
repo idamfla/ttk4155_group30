@@ -15,7 +15,7 @@
 #include "uart/uart.h"
 
 CAN_MESSAGE msg = {
-    .id = 0x1,
+    .id = 0x2,
     .data_length = 4U,
     .data = {0, 1, 2, 3},
 };
@@ -127,3 +127,12 @@ void timer_handler(void) {
     //  motor_ctrl_speed(MOTOR_SPEED_SLOW, false);
     //  motor_ctrl_pos(pos_sp);
 }
+
+/*
+TA
+.sjw = 0,
+.prop_seg = 0,
+.phase_seg1 = 6U,
+.phase_seg2 = 5U,
+.brp = 41U,
+*/

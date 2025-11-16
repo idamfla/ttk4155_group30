@@ -8,22 +8,12 @@
 
 #include "spi.h"
 
-#include <avr/interrupt.h>
+// #include <avr/interrupt.h>
 #include <string.h>
 
 #include "../gpio/gpio.h"
+#include "../interrupt.h"
 #include "spi_queue.h"
-
-// #define DDR_SPI DDRB
-// #define DD_MOSI DDB5
-// #define DD_SCK  DDB7
-
-// // #define SS DDB4
-// #define DDR_SLAVES  DDRB
-// #define PORT_SLAVES PORTB
-// #define SS1         DDB3
-// #define SS2         DDB4
-// #define DUMMY_DATA  0x00
 
 #define DDR_SPI_MOSI  DDRB
 #define PORT_SPI_MOSI PORTB
@@ -47,7 +37,7 @@
 
 #define DDR_CAN_SS  DDRD
 #define PORT_CAN_SS PORTD
-#define PIN_CAN_SS  PD3
+#define PIN_CAN_SS  PD4
 
 #define QUEUE_SIZE 10
 
@@ -150,13 +140,13 @@ void spi_master_init(void) {
 }
 
 bool spi_transfer(const spi_transfer_t* transfer) {
-    cli();
+    uint8_t sreg = INTERRUPT_DISABLE();
     if (spi_queue_push(&_spi_queue, transfer)) {
         _spi_next_transfer();
-        sei();
+        INTERRUPT_RESTORE(sreg);
         return true;
     }
-    sei();
+    INTERRUPT_RESTORE(sreg);
     return false;
 }
 
@@ -171,7 +161,7 @@ void spi_ll_transmit_blocking(uint8_t data) {
 }
 
 ISR(SPI_STC_vect) {
-    cli();
+    uint8_t sreg = INTERRUPT_DISABLE();
     if (_transfer.rx_data) {
         _transfer.rx_data[_data_idx] = SPDR;
     }
@@ -186,5 +176,5 @@ ISR(SPI_STC_vect) {
         }
         _spi_next_transfer();
     }
-    sei();
+    INTERRUPT_RESTORE(sreg);
 }

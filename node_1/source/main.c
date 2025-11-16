@@ -7,8 +7,9 @@
 #include <stdio.h>
 #include <util/delay.h>
 
+// #include "can/can.h"
+// #include "can/mcp2515.h"
 #include "can/can.h"
-#include "can/mcp2515.h"
 #include "io_board/io_board.h"
 #include "max156/max156.h"
 #include "oled/oled.h"
@@ -21,11 +22,16 @@
 #define UBRR0       (F_CPU / 16 / BAUD - 1)
 #define UPDATE_RATE 20U  // Hz
 #include "timer/timer.h"
-uint8_t arr[3] = {0x01, 0x02, 0x03};
+uint8_t arr[1] = {0x01};
 uint8_t test_data[] = {5};
-CAN_DATA test_data2 = {.id = 0x10, .data = arr, .length = 3};
+// CAN_DATA test_data2 = {.id = 0b10011101101, .data = arr, .length = 1};
+max156_data_t max156_data;
 
 static volatile bool _transmit_done = true;
+volatile bool can_joystick_flag = false;
+volatile bool can_rx_flag = false;
+volatile bool io_get_buttons_flag = false;
+volatile bool ui_event_push_flag = false;
 
 void _spi_transfer_cmplt(void* param) {
     (void)param;  // unused
@@ -41,13 +47,21 @@ const spi_transfer_t test = {
     .transfer_start_cbk = NULL,
 };
 
+uint8_t data[] = {10, 20, 30};
+can_message_t _can_msg = {
+    .id = 0x1,
+    .data = data,
+    .length = 3,
+};
+
+static volatile io_buttons_t prev_buttons = {0};
+
 void on_touch_pad_data(io_touch_pad_t* touch_pad) {
     printf("Touch Pad - X: %d, Y: %d, Signal Strength: %d\r\n", touch_pad->x, touch_pad->y,
            touch_pad->signal_strength);
 }
 
 void on_button_data(io_buttons_t* buttons) {
-    static io_buttons_t prev_buttons = {0};
     if (buttons->nav_button && !prev_buttons.nav_button) {
         ui_event_push(&ui, ui_event_button_select);
     }
@@ -68,6 +82,50 @@ void on_button_data(io_buttons_t* buttons) {
     prev_buttons = *buttons;
 }
 
+// static void can_rx_cmplt(CAN_DATA* can_data) {
+//     // printf("ID: %d, Length: %d, Data: [", can_data->id, can_data->length);
+//     // for (size_t i = 0; i < can_data->length; i++) {
+//     //     printf("%d, ", can_data->data[i]);
+//     // }
+//     // printf("]\r\n");
+// }
+
+// void update_system() {
+//     if (can_joystick_flag) {
+//         max156_trigger_conversion();
+//         max156_read(&max156_data);
+//         msg[0] = max156_data.ch3;
+//         msg[1] = max156_data.ch1;
+//         msg[2] = prev_buttons.SL1;
+//         if (!CAN_send(&can_data_send)) {
+//             printf("Did not want to send");
+//         }
+//         can_joystick_flag = false;
+//     }
+
+//     ui_dispatch(&ui);
+
+//     if (can_int && can_rx_flag) {
+//         CAN_int_handler();
+//         can_int = false;
+//         can_rx_flag = false;
+//         cli();
+//         GICR |= (1 << INT1);
+//         sei();
+//     }
+// }
+
+volatile bool _led_state = 0;
+bool _prev_led_state = 0;
+
+void can_rx_cmplt(can_message_t* can_msg) {
+    printf("ID: %d, Length: %d, Data: [", can_msg->id, can_msg->length);
+    for (size_t i = 0; i < can_msg->length; i++) {
+        printf("%d, ", can_msg->data[i]);
+    }
+    printf("]\r\n");
+}
+
 int main(void) {
     printf_init(USART0, UBRR0);
     xmem_init();
@@ -75,19 +133,43 @@ int main(void) {
 
     spi_master_init();
 
-    mcp2515_init();
+    // mcp2515_init();
 
     oled_init();
     ui_init();
 
-    CAN_init();
+    max156_init();
 
+    // CAN_init(can_rx_cmplt);
+    can_init(can_rx_cmplt);
     io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = false}, NULL);
     io_set_led_on_off(&(io_led_on_off_t){.led = 1, .on = false}, NULL);
 
     timer1_init(UPDATE_RATE);
+    printf("Starting main loop\r\n");
+
+    can_send(&_can_msg);
+
     while (1) {
+        if (can_receive_pending()) {
+            printf("Receiving CAN message\r\n");
+            can_receive();
+        }
+        // can_state_t state = can_get_state();
+        // io_get_buttons(on_button_data);
+        // if (state == can_state_idle) {
+        //     _delay_ms(1000);
+        //     can_init();
+        // }
+        // printf("Can state: %d\r\n", state);
         ui_dispatch(&ui);
+        if (_led_state != _prev_led_state) {
+            if (io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = _led_state}, NULL)) {
+                _prev_led_state = _led_state;
+            }
+        }
+
+        // update_system();
     }
     return 0;
 }
@@ -96,4 +178,5 @@ int main(void) {
 ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
+    can_send(&_can_msg);
 }

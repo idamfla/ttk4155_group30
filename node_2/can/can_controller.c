@@ -179,9 +179,11 @@ uint8_t can_receive(CAN_MESSAGE* can_msg, uint8_t rx_mb_id) {
             if (i < 4) {
                 can_msg->data[i] = (char)(data_low & 0xff);
                 data_low = data_low >> 8;
+                printf("data[%d]: %d\n\r", i, can_msg->data[i]);
             } else {
                 can_msg->data[i] = (uint8_t)(data_high & 0xff);
                 data_high = data_high >> 8;
+                printf("data[%d]: %d\n\r", i, can_msg->data[i]);
             }
         }
 

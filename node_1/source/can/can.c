@@ -1,106 +1,216 @@
 /**
  * @file can.c
- * @author author
- * @brief brief
- * @date 2025-10-23
+ * @author Marius Bär
+ * @brief High level CAN driver using the MCP2515
+ * @date 2025-11-16
  */
 
 #include "can.h"
 
-// clang-format off
-#include "../constants.h"
-#include <util/delay.h>
-// clang-format on
+#include <stdio.h>
+#include <string.h>
 
+#include "../interrupt.h"
 #include "mcp2515.h"
-#include "mcp2515_const.h"
 
-#define MCP_TXB0EID8 0x33
+#define INIT_CMD_COUNT  (sizeof(init_cmds) / sizeof(init_cmds[0]) / 2)
+#define BUFFER_SIZE     10U
+#define EXT_ID_HIGH_VAL 0U  // Dummy
+#define EXT_ID_LOW_VAL  0U  // Dummy
 
-#define MCP_TXRTSCTRL 0x0d
-#define MCP_BFPCTRL   0x0c
-#define MCP_TXB0SIDL  0x32
-#define MCP_TXB1SIDL  0x42
-#define MCP_TXB2SIDL  0x52
-#define MCP_TXB0SIDH  0x31
-#define MCP_TXB1SIDH  0x41
-#define MCP_TXB2SIDH  0x51
-
-// MCP_EFLG,      0x00,  // Maybe use in init
-
-static uint8_t init_cmds[] = {
-    // MCP_CANCTRL,   0x80,  // set to config mode
-    // MCP_TXB0CTRL,  0x03,  // priority txb0
-    // MCP_TXB1CTRL,  0x02,  // priority txb1
-    // MCP_TXB2CTRL,  0x01,  // priority
-    // MCP_TXRTSCTRL, 0x00,  // no rts
-    // MCP_TXB0SIDH,  0x04,  // init txb0 idh
-    // MCP_TXB0SIDL,  0x00,  // init txb0 idl high priority
-    // MCP_TXB1SIDH,  0x08,  // init txb1 idh
-    // MCP_TXB1SIDL,  0x00,  // init txb1 idl medium priority
-    // MCP_TXB2SIDH,  0x10,  // init txb2 idh
-    // MCP_TXB2SIDL,  0x00,  // init txb2 idl low priority
-    // MCP_RXB0CTRL,  0x20,  // init read ctrl
-    // MCP_RXB1CTRL,  0x20,  // init ctrl 1
-    // MCP_RXM0SIDH,  0xFF,  // mask idh
-    // MCP_RXM0SIDL,  0xE0,  // mask idl
-    // MCP_RXF0SIDH,  0x04,  // filter idh
-    // MCP_RXF0SIDL,  0x00,  // filter idl
-    // MCP_RXM1SIDH,  0xFF,  // filter idh
-    // MCP_RXM1SIDL,  0xE0,  // mask idl
-    // MCP_RXF1SIDH,  0x08,  // filter idh
-    // MCP_RXF1SIDL,  0x00,  // filter idl
-    // MCP_BFPCTRL,   0x00,  // disable rxb-pins
-    MCP_CNF1,    ((1U << 6) | 1U),                     //
-    MCP_CNF2,    ((1U << 7) | (3U << 3) | (7U << 0)),  //
-    MCP_CNF3,    ((1U << 0)),                          //
-    MCP_CANINTE, 0x03,                                 // enable interrupts
-    // MCP_CANINTF,   0x00,  // TODO put something here, enable interrupt flags
-    // MCP_CANCTRL,   0x40,  // Loopback mode
+static const uint8_t init_cmds[] = {
+    MCP_CNF1,
+    ((1U << 6) | 3U),  // SJW= 2TQ, BRP=3 → TQ = 2 * (3+1)/16MHz = 0.5 µs
+    MCP_CNF2,
+    ((1U << 7) | (4U << 3) | (7U << 0)),  // BTLMODE=1, PHSEG1=5, PRSEG=8
+    MCP_CNF3,
+    ((1U << 0)),  // PHSEG2=2
+    MCP_CANINTE,
+    0x02,  // enable interrupts
 };
 
-static uint8_t tx_data[10];
+volatile bool can_interrupt_pending = true;
+static uint8_t _data[BUFFER_SIZE];
+static const can_message_t* volatile _can_msg_tx;
+static can_message_t _can_msg_rx;
+void (*_can_rx_cmplt)(can_message_t* can_msg);
 
-void CAN_init() {
-    while (!mcp2515_transmit_done());
-    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x80);  // config mode
+static volatile can_state_t _can_state;
+static volatile uint8_t init_cmd_counter;
 
-    uint8_t length = sizeof(init_cmds) / sizeof(init_cmds[0]);
-    // uint8_t port;
-    // uint8_t data;
-    for (uint8_t i = 0; i < length - 1; i += 2) {
-        // port = init_cmds[i];
-        // data = init_cmds[i + 1];
-        // mcp2515_write(&data, port, 1);
-        while (!mcp2515_transmit_done());
-        // tx_data[i] = init_cmds[i];
-        // tx_data[i + 1] = init_cmds[i + 1];
-        mcp2515_write(init_cmds + 1 + i, init_cmds[i], 1);
+void CAN_setup_interrupt(void);
+void mcp2515_write_cmplt(void);
+void mcp2515_read_cmplt(volatile uint8_t* data);
+void mcp2515_bit_modify_cmplt(void);
+void mcp2515_read_status_cmplt(volatile uint8_t* status);
+void mcp2515_reset_cmplt(void);
+void mcp2515_rts_cmplt(void);
+
+bool can_init(void (*can_rx_cmplt)(can_message_t* can_msg)) {
+    _can_state = can_state_wait_for_reset;
+    _can_rx_cmplt = can_rx_cmplt;
+
+    if (mcp2515_reset(mcp2515_reset_cmplt)) {
+        return true;
+    } else {
+        return false;
     }
-
-    while (!mcp2515_transmit_done());
-    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x40);  // loopback mode
 }
 
-bool CAN_send(CAN_DATA* can_data) {
-    if (!mcp2515_transmit_done()) return false;
-    uint8_t length = 3 + can_data->length;
+void can_update(can_event_t event) {
+    uint8_t sreg = INTERRUPT_DISABLE();
+    switch (_can_state) {
+        case can_state_wait_for_reset:
+            if (event == can_event_mcp2515_reset_done) {
+                init_cmd_counter = 0;
+                mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x80,
+                                   mcp2515_bit_modify_cmplt);  // config mode
+                _can_state = can_state_wait_config_mode;
+            }
+            break;
 
-    tx_data[0] = can_data->id;
-    tx_data[1] = DUMMY;
-    tx_data[2] = can_data->length;
+        case can_state_wait_config_mode:
+            if (event == can_event_mcp2515_bit_modify_done) {
+                _data[2] = init_cmds[2 * init_cmd_counter + 1];
+                mcp2515_write(_data, init_cmds[2 * init_cmd_counter], 1, mcp2515_write_cmplt);
+                ++init_cmd_counter;
+                _can_state = can_state_wait_write_config;
+            }
+            break;
 
-    for (uint8_t i = 0; i < can_data->length; i++) {
-        tx_data[3 + i] = can_data->data[i];
+        case can_state_wait_write_config:
+            if (event == can_event_mcp2515_write_done) {
+                if (init_cmd_counter < INIT_CMD_COUNT) {
+                    _data[2] = init_cmds[2 * init_cmd_counter + 1];
+                    mcp2515_write(_data, init_cmds[2 * init_cmd_counter], 1, mcp2515_write_cmplt);
+                    ++init_cmd_counter;
+                } else {
+                    mcp2515_bit_modify(MCP_CANCTRL, 0xe0, 0x00,
+                                       mcp2515_bit_modify_cmplt);  // normal mode
+                    _can_state = can_state_wait_normal_mode;
+                }
+            }
+            break;
+
+        case can_state_wait_normal_mode:
+            if (event == can_event_mcp2515_bit_modify_done) {
+                _can_state = can_state_idle;
+            }
+            break;
+
+        case can_state_idle:
+            if (event == can_event_tx_start) {
+                _data[2] = (uint8_t)((_can_msg_tx->id >> 3) & 0xFF);
+                _data[3] = (uint8_t)((_can_msg_tx->id << 5) & 0xFF);
+                _data[4] = EXT_ID_HIGH_VAL;
+                _data[5] = EXT_ID_LOW_VAL;
+                _data[6] = _can_msg_tx->length;
+                memcpy(&_data[7], _can_msg_tx->data, _can_msg_tx->length);
+                mcp2515_write(_data, MCP_TXB0SIDH, _can_msg_tx->length + 5, mcp2515_write_cmplt);
+                _can_state = can_state_tx_prepare_data;
+            } else if (event == can_event_rx_start) {
+                mcp2515_read(MCP_RXB1SIDH, 5, mcp2515_read_cmplt);
+                _can_state = can_state_wait_rx_first_bytes;
+            }
+            break;
+
+        case can_state_tx_prepare_data:
+            if (event == can_event_mcp2515_write_done) {
+                mcp2515_request_to_send(MCP_RTS_TX0, mcp2515_rts_cmplt);
+                _can_state = can_state_wait_rts_done;
+            }
+            break;
+
+        case can_state_wait_rts_done:
+            if (event == can_event_rts_done) {
+                _can_state = can_state_idle;
+            }
+            break;
+
+        case can_state_wait_rx_first_bytes:
+            if (event == can_event_mcp2515_read_done) {
+                mcp2515_read(MCP_RXB1DM, _can_msg_rx.length, mcp2515_read_cmplt);
+                _can_state = can_state_rx_data_bytes;
+            }
+            break;
+
+        case can_state_rx_data_bytes:
+            if (event == can_event_mcp2515_read_done) {
+                _can_rx_cmplt(&_can_msg_rx);
+                mcp2515_bit_modify(MCP_CANINTF, 0xFF, 0x00,mcp2515_bit_modify_cmplt);
+                _can_state = can_state_wait_interrupt_clear;
+            }
+            break;
+
+        case can_state_wait_interrupt_clear:
+            if (event == can_event_mcp2515_bit_modify_done) {
+                _can_state = can_state_idle;
+            }
+            break;
+
+        default:
+            _can_state = can_state_wait_for_reset;
+            break;
     }
+    INTERRUPT_RESTORE(sreg);
+}
 
-    mcp2515_write(tx_data, MCP_TXB0EID8, length);
-    while (!mcp2515_transmit_done());
-    mcp2515_request_to_send(MCP_RTS_TX0);
+bool can_send(const can_message_t* can_msg) {
+    if (can_msg->length > (BUFFER_SIZE - 7U)) {
+        return false;
+    }
+    uint8_t sreg = INTERRUPT_DISABLE();
+    if (_can_state != can_state_idle) {
+        INTERRUPT_RESTORE(sreg);
+        return false;
+    }
+    _can_msg_tx = can_msg;
+    can_update(can_event_tx_start);
+    INTERRUPT_RESTORE(sreg);
     return true;
 }
 
-bool CAN_recieve_msg(uint8_t* rx_data, uint8_t address) {
-    if (!mcp2515_transmit_done()) return false;
-    return mcp2515_read(rx_data, address);
+bool can_receive(void) {
+    uint8_t sreg = INTERRUPT_DISABLE();
+    if (_can_state != can_state_idle) {
+        INTERRUPT_RESTORE(sreg);
+        return false;
+    }
+    can_update(can_event_rx_start);
+    INTERRUPT_RESTORE(sreg);
+    return true;
+}
+
+can_state_t can_get_state(void) {
+    return _can_state;
+}
+
+void mcp2515_write_cmplt(void) {
+    can_update(can_event_mcp2515_write_done);
+}
+
+void mcp2515_read_cmplt(volatile uint8_t* data) {
+    uint8_t sreg = INTERRUPT_DISABLE();
+    if (_can_state == can_state_wait_rx_first_bytes) {
+        _can_msg_rx.id = ((uint16_t)(data[2] << 3)) | ((uint16_t)(data[3] >> 5));
+        _can_msg_rx.length = data[6] & 0x0F;
+    } else if (_can_state == can_state_rx_data_bytes) {
+        _can_msg_rx.data = (uint8_t *)&data[2]; // Data starts at index 2 of rx_data (see MCP2515.c)
+    }
+    can_update(can_event_mcp2515_read_done);
+    INTERRUPT_RESTORE(sreg);
+}
+void mcp2515_bit_modify_cmplt(void) {
+    can_update(can_event_mcp2515_bit_modify_done);
+}
+void mcp2515_read_status_cmplt(volatile uint8_t* status) {
+    (void)status;
+}
+
+void mcp2515_reset_cmplt(void) {
+    can_update(can_event_mcp2515_reset_done);
+}
+
+void mcp2515_rts_cmplt(void) {
+    can_update(can_event_rts_done);
 }
