@@ -81,19 +81,21 @@ void on_button_data(io_buttons_t* buttons) {
 void transfer_states(void) {
     max156_trigger_conversion();
     max156_read(&max156_data);
+    // printf("Button: SR2=%d, SR3=%d\r\n", prev_buttons.SR2, prev_buttons.SR3);
     game_inputs.pos_joystick = max156_data.ch3;
-    game_inputs.pos_slider = max156_data.ch1;
+    game_inputs.pos_slider = max156_data.ch0;
     if (prev_buttons.SR3) {
         game_inputs.cmd = game_cmd_reset;  // reset command
-    } else if (prev_buttons.SL3) {
+    } else if (ui_data.position_init_request) {
         game_inputs.cmd = game_cmd_init_pos;  // Init position command
-    } else if (start_game_request) {
+        ui_data.position_init_request = false;
+    } else if (ui_data.start_game_request) {
         game_inputs.cmd = game_cmd_start_game;  // Start game command
+        ui_data.start_game_request = false;
     } else {
         game_inputs.cmd = game_cmd_none;  // No command
     }
     game_inputs.solenoid_out = prev_buttons.SR2;  // Solenoid output
-    start_game_request = false;
     can_send(&_can_msg);
 }
 
@@ -101,11 +103,15 @@ volatile bool _led_state = 0;
 bool _prev_led_state = 0;
 
 void can_rx_cmplt(can_message_t* can_msg) {
-    printf("ID: %d, Length: %d, Data: [", can_msg->id, can_msg->length);
-    for (size_t i = 0; i < can_msg->length; i++) {
-        printf("%d, ", can_msg->data[i]);
-    }
-    printf("]\r\n");
+    game_outputs_t* game_outputs = (game_outputs_t*)can_msg->data;
+    ui_data.game_state = game_outputs->game.state;
+    ui_data.game_score = can_msg->data[0] << 8 | can_msg->data[1];
+    // printf("Score: %u, State: %u\r\n", ui_data.game_score, ui_data.game_state);
+    // printf("ID: %d, Length: %d, Data: [", can_msg->id, can_msg->length);
+    // for (size_t i = 0; i < can_msg->length; i++) {
+    //     printf("%d, ", can_msg->data[i]);
+    // }
+    // printf("]\r\n");
 }
 
 int main(void) {
@@ -128,7 +134,7 @@ int main(void) {
     io_set_led_on_off(&(io_led_on_off_t){.led = 1, .on = false}, NULL);
 
     timer1_init(UPDATE_RATE);
-    printf("Starting main loop\r\n");
+    // printf("Starting main loop\r\n");
 
     // can_send(&_can_msg);
 
@@ -144,13 +150,11 @@ int main(void) {
         // }
         // printf("Can state: %d\r\n", state);
         ui_dispatch(&ui);
-        if (_led_state != _prev_led_state) {
-            if (io_set_led_on_off(&(io_led_on_off_t){.led = 0, .on = _led_state}, NULL)) {
-                _prev_led_state = _led_state;
+        if (ui_data.led2_state != _prev_led_state) {
+            if (io_set_led_on_off(&(io_led_on_off_t){.led = 1, .on = ui_data.led2_state}, NULL)) {
+                _prev_led_state = ui_data.led2_state;
             }
         }
-
-        // update_system();
     }
     return 0;
 }
@@ -160,5 +164,4 @@ ISR(TIMER1_COMPA_vect) {
     io_get_buttons(on_button_data);
     ui_event_push(&ui, ui_event_draw);
     transfer_states();
-    // can_send(&_can_msg);
 }
