@@ -30,6 +30,9 @@ void game_init(volatile game_t* game) {
 }
 
 void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
+    // printf("Game state: %d\r\n", game->state);
+    // printf("Game inputs - Joystick: %d, Slider: %d, Cmd: %d, Solenoid: %d\r\n",
+    //        inputs->pos_joystick, inputs->pos_slider, inputs->cmd, inputs->solenoid_out);
     static uint32_t score_sub_counter;
     static uint32_t motor_stopped_counter;
     switch (game->state) {
@@ -51,7 +54,7 @@ void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
                 game->state = game_init_pos;
             } else if (inputs->cmd == game_cmd_start_game) {
                 motor_stopped_counter = 0;
-                motor_init(MOTOR_SPEED_SLOW, MOTOR_CURRENT_LOW);
+                motor_init(MOTOR_SPEED_FAST, MOTOR_CURRENT_MAX);
                 game->state = game_start_game;
             }
             break;
@@ -73,9 +76,10 @@ void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
         case game_start_game:
             game->score = 0;
             score_sub_counter = 0;
-            motor_ctrl_pos(MOTOR_POS_MIN);
+            motor_ctrl_pos((MOTOR_POS_MAX + MOTOR_POS_MIN) / 2);
             pwm_set_dc_servo(CDTY1_MIDDLE);
-            if (ABS(motor_get_current_position() - MOTOR_POS_MIN) < MOTOR_POS_REACHED) {
+            if (ABS(motor_get_current_position() - ((MOTOR_POS_MAX + MOTOR_POS_MIN) / 2)) <
+                MOTOR_POS_REACHED) {
                 game->state = game_waiting_for_start;
             }
             // if (ABS(motor_get_current_speed()) < MOTOR_SPEED_STOPPED_THRESHOLD) {
@@ -89,22 +93,23 @@ void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
             break;
 
         case game_waiting_for_start:
-            motor_ctrl_pos(MOTOR_POS_MIN);
+            motor_ctrl_pos((MOTOR_POS_MAX + MOTOR_POS_MIN) / 2);
             if (inputs->solenoid_out) {
                 solenoid_set_state(true);
-                motor_init(MOTOR_SPEED_MAX, MOTOR_CURRENT_MAX);
+                motor_init(MOTOR_SPEED_FAST, MOTOR_CURRENT_MAX);
                 game->state = game_active;
             }
             break;
 
         case game_active:
-            int32_t pos_sp =
+            int32_t pos_motor =
                 MOTOR_POS_MIN +
-                ((MOTOR_POS_MAX - MOTOR_POS_MIN) * (inputs->pos_joystick - 66)) / (255 - 66);
-            motor_ctrl_pos(pos_sp);
-            int32_t slider_sp =
-                CDTY1_MIN + ((CDTY1_MAX - CDTY1_MIN) * (inputs->pos_slider - 66)) / (255 - 66);
-            pwm_set_dc_servo(slider_sp);
+                ((MOTOR_POS_MAX - MOTOR_POS_MIN) * ((int32_t)(inputs->pos_slider))) / (255);
+            int32_t pos_servo = CDTY1_MIN + (CDTY1_MAX - CDTY1_MIN) *
+                                                ((int32_t)(inputs->pos_joystick - 66)) / (246 - 66);
+
+            motor_ctrl_pos(pos_motor);
+            pwm_set_dc_servo(pos_servo);
             solenoid_set_state(inputs->solenoid_out);
             if (++score_sub_counter >= GAME_SCORE_CLK_DIV) {
                 score_sub_counter = 0;
@@ -120,6 +125,10 @@ void game_update(volatile game_t* game, volatile game_inputs_t* inputs) {
         case game_lost:
             if (inputs->cmd == game_cmd_start_game) {
                 game->state = game_start_game;
+            } else if (inputs->cmd == game_cmd_init_pos) {
+                motor_stopped_counter = 0;
+                motor_init(MOTOR_SPEED_FAST, MOTOR_CURRENT_MAX);
+                game->state = game_init_pos;
             }
             break;
 

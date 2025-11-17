@@ -26,7 +26,7 @@ _Static_assert(CAN_BRP > 0, "CAN_BRP cannot be 0");
 #define MOTOR_POS_MAX     (5600 - 200)
 #define MOTOR_SPEED_MAX   150
 #define MOTOR_SPEED_SLOW  10
-#define MOTOR_SPEED_FAST  SPEED_MAX
+#define MOTOR_SPEED_FAST  50
 #define MOTOR_CURRENT_MAX 4200
 #define MOTOR_CURRENT_LOW (MOTOR_CURRENT_MAX / 2)
 #define MOTOR_POS_REACHED 8

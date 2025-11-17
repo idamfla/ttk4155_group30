@@ -25,7 +25,7 @@ CanMsg msg = {
 //     .data_length = 3U,
 // };
 volatile game_t game;
-game_inputs_t game_inputs = {
+volatile game_inputs_t game_inputs = {
     .pos_joystick = 128,
     .pos_slider = 128,
     .cmd = game_cmd_none,
@@ -147,9 +147,14 @@ int main() {
 
     while (1) {
         if (can_rx(&rx_msg)) {
-            memcpy(&game_inputs, rx_msg.byte, sizeof(game_inputs_t));
-            printf("Joystick: %d, Slider: %d, Cmd: %d, Solenoid: %d\r\n", game_inputs.pos_joystick,
-                   game_inputs.pos_slider, game_inputs.cmd, game_inputs.solenoid_out);
+            // memcpy(&game_inputs, rx_msg.byte, sizeof(game_inputs_t));
+            // Copy with for loop
+            for (size_t i = 0; i < sizeof(game_inputs_t); i++) {
+                ((volatile uint8_t*)&game_inputs)[i] = rx_msg.byte[i];
+            }
+            // printf("Joystick: %d, Slider: %d, Cmd: %d, Solenoid: %d\r\n",
+            // game_inputs.pos_joystick,
+            //        game_inputs.pos_slider, game_inputs.cmd, game_inputs.solenoid_out);
         }
 
         if (transmit) {
@@ -180,7 +185,7 @@ int main() {
 void timer_handler(void) {
     static uint32_t divider = 0;
     game_update(&game, &game_inputs);
-    if (divider++ >= (100U / T_MOTOR_CONTROL)) {
+    if (divider++ >= (50U / T_MOTOR_CONTROL)) {
         divider = 0;
         transmit = true;
     }
