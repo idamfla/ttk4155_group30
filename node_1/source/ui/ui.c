@@ -39,15 +39,14 @@ volatile ui_data_t ui_data;
 
 static void main_menu_init(void) {
     static const char* menu_items[] = {
-        "Highscores:",  "IMF: 999+1",          "TAB: 999", "MAB: 42", "Game menu", "Demo Submenu",
-        "Dynamic Menu", "Initialize position",
-    };
+        "Highscores:",  "IMF: 999+1",          "TAB: 999", "MAB: 42", "Game menu", "Submenu",
+        "Dynamic Menu", "Init Pos", "9",   "10"};
     ui_menu_static_ctor(&_main_menu, main_menu_on_event, menu_items,
                         sizeof(menu_items) / sizeof(menu_items[0]));
 }
 
 static void sub_menu_init(void) {
-    static const char* menu_items[] = {"Sub 1", "Sub 2"};
+    static const char* menu_items[] = {"1", "2"};
     ui_menu_static_ctor(&_sub_menu, sub_menu_on_event, menu_items,
                         sizeof(menu_items) / sizeof(menu_items[0]));
 }
